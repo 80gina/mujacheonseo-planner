@@ -190,7 +190,10 @@ def handle(data):
         wiki = fetch_wikipedia(topic)
 
     # 4) 구글 검색 그라운딩으로 근거를 찾아 생성
-    plan, sources, err = call_gemini(api_key, SYSTEM_RULES, build_prompt(data, wiki))
+    # 웹 검색 그라운딩은 무료 등급에서 한도가 매우 작아 기본은 끕니다.
+    # 화면에서 켠 경우에만 사용하고, 한도에 걸리면 자동으로 꺼진 채 진행됩니다.
+    plan, sources, err = call_gemini(api_key, SYSTEM_RULES, build_prompt(data, wiki),
+                                     use_search=bool(data.get("useSearch")))
     if err:
         return err[0], {"ok": False, "message": err[1]}
 

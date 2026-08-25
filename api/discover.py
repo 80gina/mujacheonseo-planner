@@ -98,7 +98,8 @@ def handle(data):
     wiki = fetch_wikipedia(keyword)
 
     # ② 구글 검색 그라운딩 + 생성
-    module, sources, err = call_gemini(api_key, SYSTEM_RULES, build_prompt(data, wiki))
+    module, sources, err = call_gemini(api_key, SYSTEM_RULES, build_prompt(data, wiki),
+                                      use_search=bool(data.get("useSearch")))
     if err:
         return err[0], {"ok": False, "message": err[1]}
 

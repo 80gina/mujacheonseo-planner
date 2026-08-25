@@ -77,6 +77,7 @@ async function onDiscover(e) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         keyword: keyword,
+        useSearch: document.getElementById("d-search").checked,
         target: document.getElementById("d-target").value,
         season: document.getElementById("f-season") ? document.getElementById("f-season").value : "",
         themes: Array.from(document.querySelectorAll("#themePicker .theme-chip.is-on"))

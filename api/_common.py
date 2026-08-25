@@ -246,10 +246,30 @@ def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
                 last_err = (502, "AI 요청이 거절되었습니다. (%s / %s)" % (model, detail))
                 continue
 
-        # 이 모델이 분당 한도에 걸림 → 여유 있는 다른 모델로 넘어갑니다
+        # 한도 초과(429). 검색 그라운딩은 무료 등급에서 별도의 작은 한도를 쓰므로,
+        # 먼저 '검색 없이' 같은 모델로 다시 시도합니다. 그래도 막히면 다음 모델로.
         if res.status_code == 429:
-            last_err = (429, "무료 사용량 한도를 넘었습니다. 1분 뒤에 다시 시도해 주세요.")
-            continue
+            detail = api_error_text(res)
+            recovered = False
+            for mode in (1, 2):
+                if mode == 1 and not use_search:
+                    continue
+                try:
+                    r2 = requests.post(
+                        model_url(model), params={"key": api_key},
+                        json=build_body(system_rules, prompt, mode),
+                        timeout=REQUEST_TIMEOUT, headers={"Content-Type": "application/json"},
+                    )
+                except requests.exceptions.RequestException:
+                    break
+                if r2.status_code < 400:
+                    res = r2
+                    recovered = True
+                    break
+                detail = api_error_text(r2)
+            if not recovered:
+                last_err = (429, "무료 사용량 한도를 넘었습니다. 1분 뒤에 다시 시도해 주세요. (%s)" % model)
+                continue
         if res.status_code in (401, 403):
             return None, [], (401, "GEMINI_API_KEY 가 거부되었습니다. (%s)" % api_error_text(res))
         if res.status_code >= 400:

@@ -205,6 +205,7 @@ function collectPayload() {
     philosophy: document.getElementById("f-philosophy").value.trim(),
     activityTypes: types,
     customTopic: topicEl.value.trim(),
+    useSearch: document.getElementById("f-search").checked,
     programType: (PROGRAM_TYPES.find(function (p) {
       return p.id === document.getElementById("f-program").value;
     }) || PROGRAM_TYPES[0]),

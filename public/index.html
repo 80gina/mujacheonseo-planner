@@ -221,6 +221,15 @@
           <textarea id="f-note" name="note" rows="3" placeholder="예) 휠체어 이용 참가자가 있어요 / 비 오는 날 대안이 필요해요"></textarea>
         </div>
 
+        <div class="field">
+          <label class="switch">
+            <input type="checkbox" id="f-search" /> 🔎 웹 검색으로 근거 찾기
+          </label>
+          <p class="hint">켜면 최신 자료를 검색해 <b>출처 링크</b>와 함께 만듭니다.
+             무료 등급은 검색 한도가 작아 <b>기본은 꺼져 있고</b>, 한도에 걸리면 자동으로 꺼진 채 진행됩니다.
+             위키백과 자료 수집은 항상 작동합니다.</p>
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="btn btn-primary btn-lg" id="btnGenerate">
             <span class="btn-label">수업계획서 생성</span>
@@ -282,6 +291,9 @@
         <select id="d-target"></select>
         <button class="btn btn-primary" type="submit" id="btnDiscover">🔎 자료 모아 만들기</button>
       </form>
+      <label class="switch" style="margin-top:.6rem">
+        <input type="checkbox" id="d-search" /> 웹 검색도 함께 사용 (무료 한도 주의)
+      </label>
       <div class="discover-loading" id="discoverLoading" hidden>
         <div class="loadbar"><div class="loadbar-fill"></div></div>
         <p class="hint" id="discoverLoadingText">자료를 모으는 중입니다…</p>
