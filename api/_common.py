@@ -19,11 +19,13 @@ API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 MODEL_CANDIDATES = [
     m for m in [
         os.environ.get("GEMINI_MODEL"),   # 환경 변수로 지정하면 그것이 1순위
-        "gemini-flash-latest",            # 늘 최신 flash 를 가리키는 별칭
-        "gemini-3.7-flash",
-        "gemini-3-flash",
+        # 무료 한도가 넉넉한 안정 버전을 앞에 둡니다.
+        # 최신 모델일수록 분당 호출 한도가 빠듯해 429 가 자주 납니다.
         "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-flash-latest",
         "gemini-2.0-flash",
     ] if m
 ]
@@ -192,8 +194,10 @@ def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
         if res.status_code == 400 and use_search:
             return call_gemini(api_key, system_rules, prompt, use_search=False, models=[model])
 
+        # 이 모델이 분당 한도에 걸림 → 여유 있는 다른 모델로 넘어갑니다
         if res.status_code == 429:
-            return None, [], (429, "무료 사용량 한도를 넘었습니다. 1분 뒤에 다시 시도해 주세요.")
+            last_err = (429, "무료 사용량 한도를 넘었습니다. 1분 뒤에 다시 시도해 주세요.")
+            continue
         if res.status_code in (400, 401, 403):
             return None, [], (401, "GEMINI_API_KEY 가 없거나 잘못되었습니다. Vercel 환경 변수를 확인해 주세요.")
         if res.status_code >= 400:
