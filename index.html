@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>무자천서 에듀 | 숲생태 인문학 기반 맞춤형 수업 설계 플랫폼</title>
+<meta name="description" content="숲해설가와 생태교육자를 위한 AI 수업계획서 설계 도구. 오감 활동과 인문학적 성찰을 결합한 수업안을 만들고, 저장하고, 인쇄하고, 현장에서 음성 안내로 진행합니다." />
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌳</text></svg>" />
+</head>
+<body>
+
+<!-- ===== 헤더 / 네비게이션 ===== -->
+<header class="site-header" id="siteHeader">
+  <div class="wrap header-inner">
+    <a href="#home" class="brand" data-nav="home">
+      <span class="brand-mark">無</span>
+      <span class="brand-text">
+        <strong>무자천서 플래너</strong>
+        <small>숲생태 인문학 수업 설계 · 無字天書 에듀</small>
+      </span>
+    </a>
+
+    <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="site-nav" id="siteNav" aria-label="주요 메뉴">
+      <button class="nav-link is-active" data-nav="home">홈</button>
+      <button class="nav-link" data-nav="design">수업 설계 <span class="badge-ai">AI</span></button>
+      <button class="nav-link" data-nav="library">활동 도서관</button>
+      <button class="nav-link" data-nav="field">현장 진행</button>
+      <button class="nav-link" data-nav="archive">보관함 <span class="chip" id="archiveCount">0</span></button>
+      <button class="theme-toggle" id="themeToggle" aria-label="다크 모드 전환">🌙</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ===== 1. 홈 ===== -->
+<section class="page is-active" id="page-home">
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">無字天書 · 글자 없는 하늘의 책</p>
+      <h1>숲은 도감이 아니라<br />살아 있는 교실입니다</h1>
+      <p class="lead">
+        생태 지식을 외우게 하는 수업 대신, <b>오감 체험 · 참여형 활동 · 인문학적 성찰</b>이
+        하나로 이어지는 숲해설 수업계획서를 만들어 드립니다.
+        생성되는 활동은 <b>최해룡 전문강사(한국산림복지교육원·포레듀오)</b> 스타일의
+        현장 오감 체험 방식을 기준으로 설계됩니다.
+        주제만 고르면 AI가 초안을 쓰고, 저장하고 인쇄해서, 현장에서는 음성 안내로 진행합니다.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" data-nav="design">수업계획서 만들기</button>
+        <button class="btn btn-ghost btn-lg" data-nav="library">활동 모듈 둘러보기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h2 class="section-title">이 도구가 하는 일</h2>
+    <div class="grid grid-3">
+      <article class="card">
+        <div class="card-icon">🧭</div>
+        <h3>철학–생태 매칭</h3>
+        <p>상처, 나이테, 기생, 계절의 대극 같은 숲의 주제를 고르면 장자·노자·연기법 등
+           연결 가능한 사유의 갈래와 아이들에게 던질 <b>화두</b>를 함께 제안합니다.</p>
+      </article>
+      <article class="card">
+        <div class="card-icon">✋</div>
+        <h3>오감 활동 빌더</h3>
+        <p>강의형 설명을 걷어내고, 만지고 냄새 맡고 몸으로 흉내 내는
+           참여형 활동 모듈로 수업 흐름을 구성합니다.</p>
+      </article>
+      <article class="card">
+        <div class="card-icon">🔊</div>
+        <h3>현장 음성 진행</h3>
+        <p>완성된 계획서를 현장 모드로 넘기면, 단계별 타이머가 남은 시간을
+           음성으로 안내하고 다음 화두를 읽어 줍니다. 손에 종이를 들지 않아도 됩니다.</p>
+      </article>
+    </div>
+
+    <h2 class="section-title">기본 탑재 활동 모듈</h2>
+    <div class="grid grid-2" id="homeModules"></div>
+
+    <h2 class="section-title">수업의 뼈대 — 네 단계</h2>
+    <p class="page-sub">AI는 이 순서를 뼈대로 삼아 활동을 배치합니다. 관찰에서 시작해 성장으로 닫습니다.</p>
+    <div class="table-scroll">
+      <table class="flow-table" id="frameworkTable"></table>
+    </div>
+
+    <div class="callout">
+      <h3>수업 한 편이 만들어지는 흐름</h3>
+      <ol class="flowline">
+        <li><b>고르기</b> — 대상·시간·계절·생태 주제 입력</li>
+        <li><b>생성</b> — AI가 목표 · 활동 흐름 · 화두 · 안전 지침 초안 작성</li>
+        <li><b>다듬기</b> — 화면에서 직접 수정</li>
+        <li><b>저장 / 인쇄</b> — 보관함에 저장하고 A4로 출력</li>
+        <li><b>진행</b> — 현장 모드에서 음성 안내로 수업 운영</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. 수업 설계 (AI) ===== -->
+<section class="page" id="page-design">
+  <div class="wrap">
+    <h2 class="page-title">수업 설계 <span class="badge-ai">AI</span></h2>
+    <p class="page-sub">아래 조건을 채우면 Gemini가 숲생태 인문학 수업계획서 초안을 만들어 줍니다.</p>
+
+    <div class="design-layout">
+      <!-- 입력 폼 -->
+      <form class="panel form" id="planForm" novalidate>
+        <div class="field">
+          <label for="f-title">수업 제목 <span class="req">*</span></label>
+          <input type="text" id="f-title" name="title" placeholder="예) 나의 상처를 안아주는 나이테" />
+          <p class="hint">비워 두면 생성할 수 없습니다.</p>
+        </div>
+
+        <div class="field">
+          <label for="f-program">프로그램 유형 <span class="req">*</span></label>
+          <select id="f-program" name="program"></select>
+          <p class="hint" id="programHint"></p>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-target">연령 구분 (학습 대상) <span class="req">*</span></label>
+            <select id="f-target" name="target"></select>
+            <p class="hint" id="targetHint"></p>
+          </div>
+          <div class="field">
+            <label for="f-size">인원</label>
+            <input type="number" id="f-size" name="size" value="20" min="1" max="100" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-duration">수업 시간(분) <span class="req">*</span></label>
+            <select id="f-duration" name="duration">
+              <option>60</option>
+              <option selected>90</option>
+              <option>120</option>
+              <option>150</option>
+              <option>180</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-season">계절</label>
+            <select id="f-season" name="season">
+              <option>봄</option><option>여름</option>
+              <option selected>가을</option><option>겨울</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-difficulty">난이도 조정</label>
+          <select id="f-difficulty" name="difficulty"></select>
+          <p class="hint" id="difficultyHint"></p>
+        </div>
+
+        <div class="field">
+          <label for="f-mode">해설 모드</label>
+          <select id="f-mode" name="mode"></select>
+          <p class="hint" id="modeHint"></p>
+        </div>
+
+        <div class="field">
+          <label for="f-place">장소 특성</label>
+          <input type="text" id="f-place" name="place" placeholder="예) 도시숲 산책로, 계곡 옆 활엽수림" />
+        </div>
+
+        <div class="field">
+          <label for="f-module">숲의 소재 (활동 모듈) <span class="req">*</span></label>
+          <select id="f-module" name="module"></select>
+          <p class="hint" id="moduleHint"></p>
+        </div>
+
+        <div class="field" id="customTopicField" hidden>
+          <label for="f-topic">숲의 소재 직접 입력 <span class="req">*</span></label>
+          <input type="text" id="f-topic" placeholder="예) 반딧불이, 칡, 도롱뇽" />
+          <p class="hint">AI가 위키백과와 웹 검색으로 자료를 모아 처음부터 설계합니다.</p>
+        </div>
+
+        <div class="field">
+          <label for="f-philosophy">철학적 배경</label>
+          <input type="text" id="f-philosophy" name="philosophy" placeholder="모듈을 고르면 자동으로 채워집니다" />
+        </div>
+
+        <fieldset class="field">
+          <legend>주제별 관심사 <span class="req">*</span> <span class="legend-sub">— 같은 나무도 어느 창으로 보느냐에 따라 수업이 달라집니다</span></legend>
+          <div class="theme-picker" id="themePicker"></div>
+        </fieldset>
+
+        <fieldset class="field">
+          <legend>활동 유형 (복수 선택)</legend>
+          <div class="checks" id="activityTypes">
+            <label><input type="checkbox" value="오감 관찰" checked /> 오감 관찰</label>
+            <label><input type="checkbox" value="신체 모사·놀이" checked /> 신체 모사·놀이</label>
+            <label><input type="checkbox" value="자연물 예술" /> 자연물 예술</label>
+            <label><input type="checkbox" value="글쓰기·시" /> 글쓰기·시</label>
+            <label><input type="checkbox" value="이야기 나눔" checked /> 이야기 나눔</label>
+            <label><input type="checkbox" value="측정·기록" /> 측정·기록</label>
+          </div>
+        </fieldset>
+
+        <div class="field">
+          <label for="f-note">추가 요청 사항</label>
+          <textarea id="f-note" name="note" rows="3" placeholder="예) 휠체어 이용 참가자가 있어요 / 비 오는 날 대안이 필요해요"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg" id="btnGenerate">
+            <span class="btn-label">수업계획서 생성</span>
+          </button>
+          <button type="button" class="btn btn-ghost" id="btnReset">초기화</button>
+        </div>
+        <p class="hint">
+          ⓘ 생성에는 보통 10~25초가 걸립니다. 45초를 넘으면 자동으로 중단하고 안내합니다.
+        </p>
+      </form>
+
+      <!-- 결과 -->
+      <div class="panel result" id="resultPanel">
+        <div class="result-empty" id="resultEmpty">
+          <div class="card-icon">🌿</div>
+          <p>왼쪽 조건을 채우고 <b>수업계획서 생성</b>을 눌러 주세요.<br />
+             결과가 여기에 나타납니다.</p>
+        </div>
+
+        <div class="result-loading" id="resultLoading" hidden>
+          <div class="spinner"></div>
+          <p id="loadingText">숲을 걷는 중입니다… 수업계획서를 쓰고 있어요.</p>
+          <div class="loadbar" aria-hidden="true"><div class="loadbar-fill"></div></div>
+          <p class="hint" id="loadingSub">보통 10~25초가 걸립니다.</p>
+        </div>
+
+        <div class="alert" id="resultError" hidden role="alert">
+          <b id="errorTitle">문제가 생겼습니다</b>
+          <p id="errorMessage"></p>
+          <button class="btn btn-sm" id="btnRetry">다시 시도</button>
+        </div>
+
+        <div id="resultBody" hidden>
+          <div class="result-toolbar no-print">
+            <button class="btn btn-primary btn-sm" id="btnSave">💾 보관함에 저장</button>
+            <button class="btn btn-sm" id="btnPrint">🖨️ 인쇄 / PDF</button>
+            <button class="btn btn-sm" id="btnToField">🔊 현장 진행으로 보내기</button>
+            <button class="btn btn-sm" id="btnSpeakPlan">▶ 읽어 주기</button>
+          </div>
+          <article class="plan" id="planView"></article>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 3. 활동 도서관 ===== -->
+<section class="page" id="page-library">
+  <div class="wrap">
+    <h2 class="page-title">활동 도서관</h2>
+    <p class="page-sub">최해룡 강사 스타일의 대표 현장 활동 모듈입니다. 카드를 누르면 수업 설계 폼에 그대로 실립니다.</p>
+
+    <div class="panel discover no-print" id="discoverPanel">
+      <h3>소재 탐색 <span class="badge-ai">AI</span></h3>
+      <p class="small">목록에 없는 소재를 적어 보세요. 위키백과와 웹 검색으로 자료를 모아
+         활동 모듈 초안을 만들어 드립니다. 마음에 들면 <b>내 모듈</b>로 저장해 수업 설계에 바로 씁니다.</p>
+      <form class="discover-form" id="discoverForm">
+        <input type="text" id="d-keyword" placeholder="예) 반딧불이, 칡, 자작나무, 도롱뇽, 이끼" />
+        <select id="d-target"></select>
+        <button class="btn btn-primary" type="submit" id="btnDiscover">🔎 자료 모아 만들기</button>
+      </form>
+      <div class="discover-loading" id="discoverLoading" hidden>
+        <div class="loadbar"><div class="loadbar-fill"></div></div>
+        <p class="hint" id="discoverLoadingText">자료를 모으는 중입니다…</p>
+      </div>
+      <div class="alert" id="discoverError" hidden role="alert">
+        <b>찾지 못했습니다</b><p id="discoverErrorMsg"></p>
+      </div>
+      <div id="discoverResult" hidden></div>
+    </div>
+
+    <div class="filters no-print" id="themeFilters">
+      <span class="filter-label">관심사</span>
+      <button class="pill is-active" data-theme="all">전체</button>
+    </div>
+
+    <div class="filters no-print" id="libraryFilters">
+      <span class="filter-label">활동 유형</span>
+      <button class="pill is-active" data-filter="all">전체</button>
+      <button class="pill" data-filter="오감 관찰">오감 관찰</button>
+      <button class="pill" data-filter="신체 모사·놀이">신체 모사</button>
+      <button class="pill" data-filter="자연물 예술">자연물 예술</button>
+      <button class="pill" data-filter="글쓰기·시">글쓰기·시</button>
+    </div>
+
+    <div class="grid grid-2" id="libraryGrid"></div>
+
+    <h2 class="section-title">철학 개념 사전</h2>
+    <p class="page-sub">개념어가 어떤 생태 현상과 만나는지 한 줄로 정리했습니다. 화두를 다듬을 때 찾아보세요.</p>
+    <div class="concept-grid" id="conceptGrid"></div>
+
+    <h2 class="section-title">수업하기 좋은 노거수</h2>
+    <p class="page-sub">현장 답사지 후보입니다. 방문 전 보호수 지정 여부와 출입 규정을 반드시 확인하세요.</p>
+    <div class="booklist" id="siteList"></div>
+
+    <h2 class="section-title">생태 인문학 추천 도서 · 자료</h2>
+    <p class="page-sub">수업의 사유를 깊게 하는 참고 문헌입니다. 화두를 다듬을 때 함께 펼쳐 보세요.</p>
+    <div class="booklist" id="bookList"></div>
+  </div>
+</section>
+
+<!-- ===== 4. 현장 진행 (음성) ===== -->
+<section class="page" id="page-field">
+  <div class="wrap">
+    <h2 class="page-title">현장 진행</h2>
+    <p class="page-sub">계획서를 고르면 단계별 타이머가 돌아갑니다. 남은 시간과 다음 활동을 음성으로 안내합니다.</p>
+
+    <div class="panel field-setup no-print">
+      <div class="field-row">
+        <div class="field">
+          <label for="fieldSelect">진행할 계획서</label>
+          <select id="fieldSelect"><option value="">— 보관함에 저장된 계획서가 없습니다 —</option></select>
+        </div>
+        <div class="field">
+          <label for="voiceRate">음성 속도</label>
+          <input type="range" id="voiceRate" min="0.6" max="1.4" step="0.1" value="1" />
+          <p class="hint"><span id="voiceRateVal">1.0</span> 배속</p>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="voiceOn" checked /> 음성 안내 사용
+      </label>
+      <button class="btn btn-sm" id="btnVoiceTest">🔈 음성 테스트</button>
+      <p class="hint" id="voiceSupportHint"></p>
+    </div>
+
+    <div class="field-stage" id="fieldStage" hidden>
+      <div class="timer-card">
+        <p class="timer-step" id="timerStepName">—</p>
+        <div class="timer-clock" id="timerClock">00:00</div>
+        <div class="timer-bar"><div class="timer-bar-fill" id="timerBarFill"></div></div>
+        <p class="timer-question" id="timerQuestion"></p>
+        <div class="timer-controls">
+          <button class="btn btn-primary" id="btnFieldStart">▶ 시작</button>
+          <button class="btn" id="btnFieldPause">⏸ 일시정지</button>
+          <button class="btn" id="btnFieldNext">⏭ 다음 단계</button>
+          <button class="btn btn-ghost" id="btnFieldStop">■ 종료</button>
+        </div>
+      </div>
+      <ol class="step-list" id="fieldStepList"></ol>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. 보관함 ===== -->
+<section class="page" id="page-archive">
+  <div class="wrap">
+    <h2 class="page-title">보관함</h2>
+    <p class="page-sub">저장한 계획서는 이 브라우저에 보관됩니다. 백업하려면 JSON으로 내보내세요.</p>
+
+    <div class="filters no-print">
+      <input type="search" id="archiveSearch" placeholder="제목·주제로 검색" class="search-input" />
+      <button class="btn btn-sm" id="btnExportAll">⬇ 전체 내보내기(JSON)</button>
+      <label class="btn btn-sm file-btn">⬆ 불러오기<input type="file" id="importFile" accept="application/json" hidden /></label>
+    </div>
+
+    <div id="archiveList" class="archive-list"></div>
+    <p class="empty-note" id="archiveEmpty">아직 저장된 계획서가 없습니다.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer no-print">
+  <div class="wrap">
+    <p><b>무자천서 플래너</b> · 숲생태 인문학 수업 설계 플랫폼</p>
+    <p class="small">AI 생성 결과는 초안입니다. 현장 안전과 종 동정은 반드시 해설가가 최종 확인하세요.</p>
+  </div>
+</footer>
+
+<!-- 인쇄 전용 영역 -->
+<div id="printArea" class="print-only"></div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/planner.js"></script>
+<script src="js/discover.js"></script>
+<script src="js/library.js"></script>
+<script src="js/field.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
