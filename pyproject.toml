@@ -1,0 +1,12 @@
+# Vercel 파이썬 실행 환경 설정
+# entrypoint 가 '이 서비스의 유일한 입구'를 가리킵니다.
+
+[project]
+name = "mujacheonseo-planner"
+version = "1.0.0"
+description = "숲생태 인문학 수업 설계 플랫폼 - 무자천서 에듀"
+requires-python = ">=3.9"
+dependencies = ["requests>=2.32.0"]
+
+[tool.vercel]
+entrypoint = "api/index.py"

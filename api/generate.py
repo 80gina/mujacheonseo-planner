@@ -2,8 +2,10 @@
 # api/generate.py — Vercel Serverless Function (Python)
 # 프론트(js/planner.js)가 fetch('/api/generate') 로 호출합니다.
 #
+# api/index.py 가 /api/generate 요청을 받으면 이 파일의 handle() 을 부릅니다.
+#
 # 하는 일
-#   1) POST 본문(JSON)을 읽고 필수값을 검증한다        -> 실패 시 400
+#   1) 본문(JSON)의 필수값을 검증한다                  -> 실패 시 400
 #   2) 환경 변수에서 GEMINI_API_KEY 를 읽는다          -> 없으면 401
 #   3) Gemini API 에 프롬프트를 보내 수업계획서를 받는다 -> 실패 시 502 / 429 / 504
 #   4) JSON 으로 정리해 프론트에 돌려준다
@@ -14,7 +16,6 @@
 
 import json
 import os
-from http.server import BaseHTTPRequestHandler
 
 import sys as _sys
 _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # 같은 폴더의 _common.py 를 찾기 위해
@@ -159,77 +160,46 @@ def build_prompt(data, wiki=None):
 
 
 # ---------------------------------------------------------
-# HTTP 핸들러
+# 처리 함수 — api/index.py 가 호출합니다
+#   돌려주는 값: (HTTP 상태코드, 응답 dict)
 # ---------------------------------------------------------
-class handler(BaseHTTPRequestHandler):
+def handle(data):
+    # 1) 필수값 검증 (빈 입력 실패 처리)
+    title = (data.get("title") or "").strip()
+    if not title:
+        return 400, {"ok": False, "message": "수업 제목이 비어 있습니다."}
+    if len(title) > 120:
+        return 400, {"ok": False, "message": "수업 제목이 너무 깁니다. (120자 이내)"}
+    try:
+        duration = int(data.get("duration", 90))
+    except (TypeError, ValueError):
+        return 400, {"ok": False, "message": "수업 시간이 숫자가 아닙니다."}
+    if not (20 <= duration <= 300):
+        return 400, {"ok": False, "message": "수업 시간은 20분에서 300분 사이여야 합니다."}
 
-    def _send(self, status, obj):
-        raw = json.dumps(obj, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(raw)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(raw)
+    # 2) API 키 — 코드가 아니라 환경 변수에서만 읽습니다
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return 401, {"ok": False,
+                     "message": "서버에 GEMINI_API_KEY 환경 변수가 설정되어 있지 않습니다."}
 
-    def do_OPTIONS(self):
-        self.send_response(204)
-        self.send_header("Allow", "POST, OPTIONS")
-        self.end_headers()
+    # 3) 자유 주제일 때는 위키백과에서 배경 자료를 먼저 모읍니다
+    wiki = []
+    topic = (data.get("customTopic") or "").strip()
+    if topic and not data.get("module"):
+        wiki = fetch_wikipedia(topic)
 
-    def do_GET(self):
-        self._send(405, {"ok": False, "message": "POST 로 요청해 주세요."})
+    # 4) 구글 검색 그라운딩으로 근거를 찾아 생성
+    plan, sources, err = call_gemini(api_key, SYSTEM_RULES, build_prompt(data, wiki))
+    if err:
+        return err[0], {"ok": False, "message": err[1]}
 
-    def do_POST(self):
-        # 1) 본문 읽기
-        try:
-            length = int(self.headers.get("Content-Length") or 0)
-            data = json.loads(self.rfile.read(length) or b"{}")
-        except Exception:
-            return self._send(400, {"ok": False, "message": "요청 본문이 올바른 JSON 이 아닙니다."})
+    for key in ("summary", "coreQuestion", "philosophyNote"):
+        plan.setdefault(key, "")
+    for key in ("objectives", "flow", "materials", "safety", "reflection", "extension"):
+        plan.setdefault(key, [])
 
-        # 2) 필수값 검증 (빈 입력 실패 처리)
-        title = (data.get("title") or "").strip()
-        if not title:
-            return self._send(400, {"ok": False, "message": "수업 제목이 비어 있습니다."})
-        if len(title) > 120:
-            return self._send(400, {"ok": False, "message": "수업 제목이 너무 깁니다. (120자 이내)"})
-        try:
-            duration = int(data.get("duration", 90))
-        except (TypeError, ValueError):
-            return self._send(400, {"ok": False, "message": "수업 시간이 숫자가 아닙니다."})
-        if not (20 <= duration <= 300):
-            return self._send(400, {"ok": False, "message": "수업 시간은 20분에서 300분 사이여야 합니다."})
-
-        # 3) API 키
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            return self._send(401, {
-                "ok": False,
-                "message": "서버에 GEMINI_API_KEY 환경 변수가 설정되어 있지 않습니다."
-            })
-
-        # 4) 자유 주제일 때는 위키백과에서 배경 자료를 먼저 모읍니다
-        wiki = []
-        topic = (data.get("customTopic") or "").strip()
-        if topic and not data.get("module"):
-            wiki = fetch_wikipedia(topic)
-
-        # 5) 구글 검색 그라운딩으로 근거를 찾아 생성
-        plan, sources, err = call_gemini(api_key, SYSTEM_RULES, build_prompt(data, wiki))
-        if err:
-            return self._send(err[0], {"ok": False, "message": err[1]})
-
-        for key in ("summary", "coreQuestion", "philosophyNote"):
-            plan.setdefault(key, "")
-        for key in ("objectives", "flow", "materials", "safety", "reflection", "extension"):
-            plan.setdefault(key, [])
-
-        wiki_sources = [{"title": w["title"] + " (위키백과)", "url": w["url"]} for w in wiki if w["url"]]
-        plan["title"] = title
-        return self._send(200, {
-            "ok": True,
-            "model": GEMINI_MODEL,
-            "plan": plan,
-            "sources": wiki_sources + sources,
-        })
+    wiki_sources = [{"title": w["title"] + " (위키백과)", "url": w["url"]} for w in wiki if w["url"]]
+    plan["title"] = title
+    return 200, {"ok": True, "model": GEMINI_MODEL, "plan": plan,
+                 "sources": wiki_sources + sources}

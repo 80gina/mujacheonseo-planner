@@ -12,7 +12,6 @@
 import json
 import os
 import sys as _sys
-from http.server import BaseHTTPRequestHandler
 
 _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # 같은 폴더의 _common.py 를 찾기 위해
 
@@ -80,62 +79,40 @@ def build_prompt(data, wiki):
     return "\n".join(lines)
 
 
-class handler(BaseHTTPRequestHandler):
+# ---------------------------------------------------------
+# 처리 함수 — api/index.py 가 호출합니다
+# ---------------------------------------------------------
+def handle(data):
+    keyword = (data.get("keyword") or "").strip()
+    if not keyword:
+        return 400, {"ok": False, "message": "찾아볼 소재를 입력해 주세요!"}
+    if len(keyword) > 60:
+        return 400, {"ok": False, "message": "소재 이름이 너무 깁니다. (60자 이내)"}
 
-    def _send(self, status, obj):
-        raw = json.dumps(obj, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(raw)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(raw)
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return 401, {"ok": False,
+                     "message": "서버에 GEMINI_API_KEY 환경 변수가 설정되어 있지 않습니다."}
 
-    def do_GET(self):
-        self._send(405, {"ok": False, "message": "POST 로 요청해 주세요."})
+    # ① 위키백과에서 배경 자료 수집
+    wiki = fetch_wikipedia(keyword)
 
-    def do_POST(self):
-        try:
-            length = int(self.headers.get("Content-Length") or 0)
-            data = json.loads(self.rfile.read(length) or b"{}")
-        except Exception:
-            return self._send(400, {"ok": False, "message": "요청 본문이 올바른 JSON 이 아닙니다."})
+    # ② 구글 검색 그라운딩 + 생성
+    module, sources, err = call_gemini(api_key, SYSTEM_RULES, build_prompt(data, wiki))
+    if err:
+        return err[0], {"ok": False, "message": err[1]}
 
-        keyword = (data.get("keyword") or "").strip()
-        if not keyword:
-            return self._send(400, {"ok": False, "message": "찾아볼 소재를 입력해 주세요!"})
-        if len(keyword) > 60:
-            return self._send(400, {"ok": False, "message": "소재 이름이 너무 깁니다. (60자 이내)"})
+    wiki_sources = [{"title": w["title"] + " (위키백과)", "url": w["url"]} for w in wiki if w["url"]]
 
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            return self._send(401, {
-                "ok": False,
-                "message": "서버에 GEMINI_API_KEY 환경 변수가 설정되어 있지 않습니다."
-            })
+    module.setdefault("steps", [])
+    module.setdefault("types", ["오감 관찰"])
+    module.setdefault("themes", ["science"])
+    module.setdefault("season", ["봄", "여름", "가을"])
+    module.setdefault("materials", [])
+    module.setdefault("caution", "")
+    module["custom"] = True
 
-        # ① 위키백과에서 배경 자료 수집
-        wiki = fetch_wikipedia(keyword)
-
-        # ② 구글 검색 그라운딩 + 생성
-        module, sources, err = call_gemini(api_key, SYSTEM_RULES, build_prompt(data, wiki))
-        if err:
-            return self._send(err[0], {"ok": False, "message": err[1]})
-
-        # 위키 출처를 앞에 붙입니다
-        wiki_sources = [{"title": w["title"] + " (위키백과)", "url": w["url"]} for w in wiki if w["url"]]
-
-        module.setdefault("steps", [])
-        module.setdefault("types", ["오감 관찰"])
-        module.setdefault("themes", ["science"])
-        module.setdefault("season", ["봄", "여름", "가을"])
-        module.setdefault("materials", [])
-        module.setdefault("caution", "")
-        module["custom"] = True
-
-        return self._send(200, {
-            "ok": True,
-            "model": os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
-            "module": module,
-            "sources": wiki_sources + sources,
-        })
+    return 200, {"ok": True,
+                 "model": os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
+                 "module": module,
+                 "sources": wiki_sources + sources}

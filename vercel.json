@@ -1,18 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/generate.py": {
-      "runtime": "@vercel/python@4.7.1",
-      "maxDuration": 60,
-      "includeFiles": "api/_common.py"
-    },
-    "api/discover.py": {
-      "runtime": "@vercel/python@4.7.1",
-      "maxDuration": 60,
-      "includeFiles": "api/_common.py"
-    },
-    "api/health.py": {
-      "runtime": "@vercel/python@4.7.1"
-    }
-  }
+  "rewrites": [
+    { "source": "/api/generate", "destination": "/api/index" },
+    { "source": "/api/discover", "destination": "/api/index" },
+    { "source": "/api/health",   "destination": "/api/index" }
+  ]
 }
