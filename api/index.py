@@ -15,6 +15,7 @@ import json
 import os
 import sys
 from http.server import BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # 같은 폴더의 부품들을 찾기 위해
 
@@ -37,15 +38,21 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
-    # ---------- 경로에서 무엇을 요청했는지 알아내기 ----------
+    # ---------- 무엇을 요청했는지 알아내기 ----------
+    # Vercel 이 /api/health 를 /api/index?route=health 로 넘겨 주므로
+    # ① 먼저 route 쪽지를 보고 ② 없으면 주소 끝을 봅니다.
     def _route(self):
-        path = (self.path or "").split("?")[0].rstrip("/")
-        if path.endswith("generate"):
-            return "generate"
-        if path.endswith("discover"):
-            return "discover"
-        if path.endswith("health"):
-            return "health"
+        parsed = urlparse(self.path or "")
+
+        query = parse_qs(parsed.query or "")
+        tag = (query.get("route") or [""])[0].strip().lower()
+        if tag in ("generate", "discover", "health"):
+            return tag
+
+        path = (parsed.path or "").rstrip("/")
+        for name in ("generate", "discover", "health"):
+            if path.endswith(name):
+                return name
         return ""
 
     # ---------- 본문 읽기 ----------

@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/api/generate", "destination": "/api/index" },
-    { "source": "/api/discover", "destination": "/api/index" },
-    { "source": "/api/health",   "destination": "/api/index" }
+    { "source": "/api/generate", "destination": "/api/index?route=generate" },
+    { "source": "/api/discover", "destination": "/api/index?route=discover" },
+    { "source": "/api/health",   "destination": "/api/index?route=health" }
   ]
 }
