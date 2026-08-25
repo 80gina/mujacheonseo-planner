@@ -19,14 +19,14 @@ API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 MODEL_CANDIDATES = [
     m for m in [
         os.environ.get("GEMINI_MODEL"),   # 환경 변수로 지정하면 그것이 1순위
-        # 무료 한도가 넉넉한 안정 버전을 앞에 둡니다.
-        # 최신 모델일수록 분당 호출 한도가 빠듯해 429 가 자주 납니다.
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-3.5-flash",
+        # 실제 목록(/api/health)에서 확인된 이름만 씁니다.
+        # lite 계열을 앞에 두는 이유: 무료 분당 한도가 가장 넉넉해 429 가 덜 납니다.
         "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-flash-lite-latest",
         "gemini-flash-latest",
-        "gemini-2.0-flash",
+        "gemini-2.5-flash-lite",          # 위가 모두 막힐 때의 예비
+        "gemini-2.5-flash",
     ] if m
 ]
 GEMINI_MODEL = MODEL_CANDIDATES[0]
