@@ -10,6 +10,11 @@ function navigate(name) {
   document.querySelectorAll(".nav-link").forEach(function (b) {
     b.classList.toggle("is-active", b.dataset.nav === name);
   });
+  document.querySelectorAll("#tabbar button").forEach(function (b) {
+    b.classList.toggle("is-active", b.dataset.nav === name);
+  });
+  // 현장 진행 화면에서는 화면이 꺼지지 않게 합니다
+  if (typeof keepAwake === "function") keepAwake(name === "field");
   document.getElementById("siteNav").classList.remove("is-open");
   document.getElementById("navToggle").setAttribute("aria-expanded", "false");
   if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
@@ -30,7 +35,8 @@ function initNav() {
   });
 
   const start = (location.hash || "#home").slice(1);
-  navigate(["home", "design", "library", "field", "archive"].indexOf(start) >= 0 ? start : "home");
+  const pages = ["home", "design", "library", "field", "archive", "status"];
+  navigate(pages.indexOf(start) >= 0 ? start : "home");
 }
 
 /* ---------- 다크 모드 ---------- */
@@ -148,5 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initLibrary();
   initField();
   initArchive();
+  initStatus();
+  initPWA();
   console.log("[무자천서 플래너] 준비 완료");
 });

@@ -117,7 +117,8 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = self._route()
         if route == "health":
-            status, body = health_mod.handle()
+            query = parse_qs(urlparse(self.path or "").query or "")
+            status, body = health_mod.handle(query)
             return self._send(status, body)
 
         # API 주소가 아니면 화면 파일을 내보냅니다

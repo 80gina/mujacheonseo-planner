@@ -337,7 +337,8 @@ function renderPlan(p) {
         <td>${esc(s.materials || "")}</td>
       </tr>`).join("");
 
-  document.getElementById("planView").innerHTML = `
+  const view = document.getElementById("planView");
+  view.innerHTML = `
     <h3 class="plan-title" contenteditable="true">${esc(p.title)}</h3>
     <div class="plan-meta">
       <span>${esc(p.target)}</span>
@@ -372,6 +373,8 @@ function renderPlan(p) {
 
     <div class="plan-block">
       <h4>현장 체험 활동 가이드 (최해룡 강사 스타일)</h4>
+      <p class="hint no-print">단계를 누르면 <b>완료 표시</b>가 켜집니다. 소제목을 누르면 그 부분이 접힙니다.</p>
+      <div class="plan-progress no-print"><div class="plan-progress-fill" id="planProgress"></div></div>
       <div class="table-scroll">
         <table class="flow-table">
           <thead><tr><th>시간</th><th>단계 · 활동</th><th>던질 화두</th><th>준비물</th></tr></thead>
@@ -415,6 +418,35 @@ function renderPlan(p) {
       ${ul(p.extension)}
     </div>` : ""}
   `;
+  initPlanInteractions();
+}
+
+/* 계획서를 손으로 다룰 수 있게 — 블록 접기, 단계 완료 표시 */
+function initPlanInteractions() {
+  const view = document.getElementById("planView");
+  if (!view || view.dataset.bound) return;
+  view.dataset.bound = "1";
+
+  view.addEventListener("click", function (e) {
+    // ① 소제목을 누르면 그 블록을 접었다 폅니다
+    const head = e.target.closest(".plan-block > h4");
+    if (head) {
+      head.parentElement.classList.toggle("is-folded");
+      return;
+    }
+    // ② 흐름표의 단계를 누르면 '완료' 표시가 켜집니다
+    const row = e.target.closest(".flow-table tbody tr");
+    if (row) {
+      row.classList.toggle("is-done");
+      const total = view.querySelectorAll(".flow-table tbody tr").length;
+      const done = view.querySelectorAll(".flow-table tbody tr.is-done").length;
+      const bar = document.getElementById("planProgress");
+      if (bar) {
+        bar.style.width = (total ? (done / total) * 100 : 0) + "%";
+        bar.parentElement.title = done + " / " + total + " 단계 완료";
+      }
+    }
+  });
 }
 
 /* 음성으로 읽을 문장 만들기 */

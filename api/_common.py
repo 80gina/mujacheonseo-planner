@@ -152,6 +152,46 @@ def pick_model(api_key):
     return available[0], available
 
 
+def build_body(system_rules, prompt, mode):
+    """요청 본문을 만듭니다. mode 가 커질수록 '기능을 덜어낸' 단순한 형태입니다.
+
+    0: 구글 검색 그라운딩 사용 (근거 있는 답)
+    1: 검색 없이, JSON 강제 출력
+    2: 가장 단순한 형태 — 옛 모델이나 제약이 많은 모델용
+    """
+    cfg = {"temperature": 0.85, "maxOutputTokens": 6144}
+
+    if mode == 0:
+        return {
+            "systemInstruction": {"parts": [{"text": system_rules}]},
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "generationConfig": cfg,
+            "tools": [{"googleSearch": {}}],
+        }
+    if mode == 1:
+        cfg["responseMimeType"] = "application/json"
+        return {
+            "systemInstruction": {"parts": [{"text": system_rules}]},
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "generationConfig": cfg,
+        }
+    # mode 2 — systemInstruction 도 쓰지 않고 프롬프트에 합쳐 보냅니다
+    return {
+        "contents": [{"role": "user",
+                      "parts": [{"text": system_rules + "\n\n----\n\n" + prompt}]}],
+        "generationConfig": cfg,
+    }
+
+
+def api_error_text(res):
+    """구글이 돌려준 오류 설명을 짧게 뽑아냅니다(키 값은 절대 포함되지 않습니다)."""
+    try:
+        msg = (res.json().get("error") or {}).get("message", "")
+        return (msg or "")[:300]
+    except Exception:
+        return (res.text or "")[:200]
+
+
 def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
     """(결과 dict, 출처 list, 에러 tuple) 를 돌려줍니다.
 
@@ -164,17 +204,7 @@ def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
         models = list(MODEL_CANDIDATES)
     tried = list(models)
 
-    body = {
-        "systemInstruction": {"parts": [{"text": system_rules}]},
-        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.85, "maxOutputTokens": 6144},
-    }
-    if use_search:
-        # 구글 검색 그라운딩. 이 도구를 쓰면 JSON 강제 모드를 함께 쓸 수 없어
-        # 프롬프트로 JSON 을 요구하고 extract_json 으로 뽑아냅니다.
-        body["tools"] = [{"googleSearch": {}}]
-    else:
-        body["generationConfig"]["responseMimeType"] = "application/json"
+    body = build_body(system_rules, prompt, 0 if use_search else 1)
 
     last_err = None
     for model in models:
@@ -193,18 +223,38 @@ def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
             last_err = (502, "사용할 수 있는 모델을 찾지 못했습니다. /api/health 에서 모델 목록을 확인해 주세요.")
             continue
 
-        # 검색 도구를 지원하지 않는 요청이면 검색 없이 한 번만 재시도
-        if res.status_code == 400 and use_search:
-            return call_gemini(api_key, system_rules, prompt, use_search=False, models=[model])
+        # 요청 형식이 안 맞으면(400) 기능을 하나씩 덜어내며 같은 모델로 다시 시도
+        if res.status_code == 400:
+            detail = api_error_text(res)
+            for mode in (1, 2):
+                if mode == 1 and not use_search:
+                    continue  # 이미 mode 1 로 보냈으므로 건너뜀
+                try:
+                    r2 = requests.post(
+                        model_url(model), params={"key": api_key},
+                        json=build_body(system_rules, prompt, mode),
+                        timeout=REQUEST_TIMEOUT, headers={"Content-Type": "application/json"},
+                    )
+                except requests.exceptions.RequestException:
+                    break
+                if r2.status_code < 400:
+                    res = r2
+                    detail = ""
+                    break
+                detail = api_error_text(r2)
+            if detail:
+                last_err = (502, "AI 요청이 거절되었습니다. (%s / %s)" % (model, detail))
+                continue
 
         # 이 모델이 분당 한도에 걸림 → 여유 있는 다른 모델로 넘어갑니다
         if res.status_code == 429:
             last_err = (429, "무료 사용량 한도를 넘었습니다. 1분 뒤에 다시 시도해 주세요.")
             continue
-        if res.status_code in (400, 401, 403):
-            return None, [], (401, "GEMINI_API_KEY 가 없거나 잘못되었습니다. Vercel 환경 변수를 확인해 주세요.")
+        if res.status_code in (401, 403):
+            return None, [], (401, "GEMINI_API_KEY 가 거부되었습니다. (%s)" % api_error_text(res))
         if res.status_code >= 400:
-            last_err = (502, "AI 서버와의 통신이 원활하지 않습니다. (HTTP %d)" % res.status_code)
+            last_err = (502, "AI 서버 오류 (HTTP %d · %s / %s)"
+                        % (res.status_code, model, api_error_text(res)))
             continue
 
         try:

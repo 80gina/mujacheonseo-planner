@@ -429,3 +429,115 @@ fieldset.field{border:0; padding:0; margin-inline:0;}
   .quote{border-left:2px solid #666;}
   a[href]::after{content:"";}
 }
+
+/* ============ 모바일 하단 탭바 ============ */
+.tabbar{display:none;}
+.install-btn{margin-left:.5rem;}
+
+/* ============ 상태 · 진단 화면 ============ */
+.status-actions{display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.2rem;}
+.status-loading{display:grid; place-items:center; padding:1.5rem 0; color:var(--text-soft);}
+.status-sub{margin:1.6rem 0 .8rem; font-size:1.05rem;}
+.signal{
+  display:flex; gap:.75rem; align-items:flex-start;
+  background:var(--bg-soft); border:1px solid var(--line);
+  border-radius:var(--radius-sm); padding:.8rem 1rem; margin-bottom:.5rem;
+}
+.signal-dot{
+  flex:none; width:11px; height:11px; border-radius:50%; margin-top:.45em;
+  box-shadow:0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
+}
+.signal.is-ok{color:var(--accent);}
+.signal.is-ok .signal-dot{background:var(--accent);}
+.signal.is-bad{color:var(--warn);}
+.signal.is-bad .signal-dot{background:var(--warn);}
+.signal b{display:block; color:var(--text); font-size:.96rem;}
+.signal p{margin:.15em 0 0; font-size:.85rem; color:var(--text-soft); word-break:break-word;}
+.status-details{margin:.6rem 0 1rem;}
+.status-details summary{cursor:pointer; font-size:.9rem; color:var(--accent-strong); font-weight:600;}
+.chip-list{display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.7rem;}
+.chip-model{
+  font-size:.75rem; background:var(--bg); border:1px solid var(--line);
+  padding:.15em .55em; border-radius:99px; color:var(--text-soft);
+}
+
+/* ============ 모바일 (720px 이하) ============ */
+@media (max-width:720px){
+  /* 하단 탭바 표시 */
+  .tabbar{
+    display:grid; grid-template-columns:repeat(5,1fr);
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    background:color-mix(in srgb, var(--bg-soft) 94%, transparent);
+    backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .tabbar button{
+    background:none; border:0; padding:.55rem .2rem .6rem;
+    display:flex; flex-direction:column; align-items:center; gap:.15rem;
+    font-size:.72rem; font-weight:600; color:var(--text-soft);
+    min-height:56px;                    /* 손가락으로 누르기 좋은 크기 */
+  }
+  .tabbar button span{font-size:1.25rem; line-height:1;}
+  .tabbar button.is-active{color:var(--accent-strong);}
+
+  /* 하단 탭에 가리지 않도록 여백 */
+  body{padding-bottom:64px;}
+  .site-footer{margin-bottom:8px;}
+
+  /* 상단 메뉴에서 중복되는 항목 정리 */
+  .install-btn{width:100%; margin:.4rem 0 0;}
+
+  /* 터치 대상 키우기 */
+  .btn{min-height:44px;}
+  .btn-sm{min-height:38px;}
+  input,select,textarea{font-size:16px; min-height:44px;}  /* 16px 미만이면 iOS 가 확대합니다 */
+  .theme-chip{min-height:38px;}
+  .nav-link{min-height:46px;}
+
+  /* 현장 진행 — 한 손으로 조작 */
+  .timer-card{padding:1.6rem 1.1rem; position:sticky; top:72px;}
+  .timer-controls .btn{flex:1 1 45%;}
+  .step-list li{padding:.9rem 1rem;}
+
+  /* 결과 도구 모음을 2열로 */
+  .result-toolbar{display:grid; grid-template-columns:1fr 1fr; gap:.5rem;}
+  .result-toolbar .btn{width:100%;}
+
+  /* 표는 가로로 밀어서 보기 */
+  .flow-table{min-width:520px;}
+}
+
+/* 앱으로 설치해 실행 중일 때 */
+.is-app .site-header{padding-top:env(safe-area-inset-top);}
+
+/* 인쇄할 때는 탭바를 감춥니다 */
+@media print{ .tabbar{display:none !important;} body{padding-bottom:0;} }
+
+/* ============ 계획서 인터랙션 ============ */
+.plan-block > h4{cursor:pointer; user-select:none; position:relative; padding-right:1.4em;}
+.plan-block > h4::after{
+  content:"▾"; position:absolute; right:0; top:0; font-size:.9em;
+  transition:transform .18s ease; opacity:.6;
+}
+.plan-block.is-folded > h4::after{transform:rotate(-90deg);}
+.plan-block.is-folded > *:not(h4){display:none;}
+
+.plan-progress{
+  height:6px; background:var(--accent-soft); border-radius:99px;
+  overflow:hidden; margin:.2rem 0 .9rem;
+}
+.plan-progress-fill{
+  height:100%; width:0%; background:var(--accent);
+  border-radius:99px; transition:width .25s ease;
+}
+.flow-table tbody tr{cursor:pointer; transition:.15s;}
+.flow-table tbody tr:hover{background:var(--accent-soft);}
+.flow-table tbody tr.is-done{opacity:.5;}
+.flow-table tbody tr.is-done td:first-child::before{content:"✓ "; color:var(--accent); font-weight:700;}
+
+@media print{
+  .plan-block.is-folded > *:not(h4){display:revert !important;}
+  .plan-block > h4::after{content:"";}
+  .flow-table tbody tr.is-done{opacity:1;}
+}
