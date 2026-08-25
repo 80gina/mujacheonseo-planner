@@ -158,8 +158,11 @@ def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
     모델 이름이 계정마다 다르므로 후보를 차례로 시도합니다.
     검색 도구를 못 쓰는 환경이면 검색 없이 한 번 더 시도합니다.
     """
+    # 맨 처음 호출인지 기억해 둡니다(안전장치를 딱 한 번만 쓰기 위해)
+    top_level = models is None
     if models is None:
         models = list(MODEL_CANDIDATES)
+    tried = list(models)
 
     body = {
         "systemInstruction": {"parts": [{"text": system_rules}]},
@@ -220,14 +223,29 @@ def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
         return parsed, sources, None
 
     # 후보가 전부 안 통하면, 이 키로 실제 열려 있는 모델을 읽어서 한 번 더 시도합니다
-    if models is not None and len(models) > 1:
-        picked, available = pick_model(api_key)
-        if picked and picked not in models:
-            return call_gemini(api_key, system_rules, prompt,
-                               use_search=use_search, models=[picked])
+    if top_level:
+        available = list_models(api_key)
         if not available:
             return None, [], (401, "이 API 키로 사용할 수 있는 모델이 없습니다. "
                                    "Google AI Studio 에서 키를 다시 발급해 주세요.")
+
+        # 아직 안 써 본 것 중 flash 계열을 우선해 최대 3개까지 시도
+        def score(name):
+            digits = [int(d) for d in "".join(
+                c if c.isdigit() else " " for c in name).split()]
+            return (1 if "flash" in name else 0, digits or [0])
+
+        rest = [m for m in available if m not in tried and "embedding" not in m]
+        rest.sort(key=score, reverse=True)
+        if rest:
+            result, sources, err = call_gemini(
+                api_key, system_rules, prompt, use_search=use_search, models=rest[:3])
+            if not err:
+                return result, sources, None
+            last_err = err
+
+        return None, [], (last_err[0], last_err[1] +
+                          " (시도한 모델: " + ", ".join((tried + rest[:3])[:6]) + ")")
 
     return None, [], (last_err or (502, "AI 서버와의 통신이 원활하지 않습니다."))
 
