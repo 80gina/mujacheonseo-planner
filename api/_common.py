@@ -18,11 +18,13 @@ API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 # 첫 번째부터 차례로 시도하고, 없다는 응답(404)이 오면 다음 후보로 넘어갑니다.
 MODEL_CANDIDATES = [
     m for m in [
-        os.environ.get("GEMINI_MODEL"),
+        os.environ.get("GEMINI_MODEL"),   # 환경 변수로 지정하면 그것이 1순위
+        "gemini-flash-latest",            # 늘 최신 flash 를 가리키는 별칭
+        "gemini-3.7-flash",
+        "gemini-3-flash",
         "gemini-2.5-flash",
-        "gemini-flash-latest",
+        "gemini-2.5-flash-lite",
         "gemini-2.0-flash",
-        "gemini-1.5-flash",
     ] if m
 ]
 GEMINI_MODEL = MODEL_CANDIDATES[0]
@@ -121,6 +123,33 @@ def fetch_wikipedia(keyword, limit=2):
 #    use_search=True 이면 구글 검색으로 근거를 찾아(그라운딩) 답합니다.
 #    검색 도구를 못 쓰는 환경이면 자동으로 한 번 더, 검색 없이 시도합니다.
 # ---------------------------------------------------------
+def pick_model(api_key):
+    """이 키로 실제 쓸 수 있는 모델 중 가장 알맞은 것을 골라 줍니다.
+
+    ① 후보 목록에 있으면서 실제로 열려 있는 것
+    ② 없으면 열려 있는 모델 중 'flash' 가 들어간 최신 것
+    ③ 그것도 없으면 열려 있는 아무 것
+    """
+    available = list_models(api_key)
+    if not available:
+        return None, []
+
+    for m in MODEL_CANDIDATES:
+        if m in available:
+            return m, available
+
+    flash = [m for m in available if "flash" in m and "thinking" not in m]
+    if flash:
+        # 이름에 붙은 숫자가 큰 쪽(최신)을 우선합니다
+        def score(name):
+            digits = "".join(c if c.isdigit() else " " for c in name).split()
+            return [int(d) for d in digits] or [0]
+        flash.sort(key=score, reverse=True)
+        return flash[0], available
+
+    return available[0], available
+
+
 def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
     """(결과 dict, 출처 list, 에러 tuple) 를 돌려줍니다.
 
@@ -185,6 +214,16 @@ def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):
 
         parsed["_model"] = model
         return parsed, sources, None
+
+    # 후보가 전부 안 통하면, 이 키로 실제 열려 있는 모델을 읽어서 한 번 더 시도합니다
+    if models is not None and len(models) > 1:
+        picked, available = pick_model(api_key)
+        if picked and picked not in models:
+            return call_gemini(api_key, system_rules, prompt,
+                               use_search=use_search, models=[picked])
+        if not available:
+            return None, [], (401, "이 API 키로 사용할 수 있는 모델이 없습니다. "
+                                   "Google AI Studio 에서 키를 다시 발급해 주세요.")
 
     return None, [], (last_err or (502, "AI 서버와의 통신이 원활하지 않습니다."))
 

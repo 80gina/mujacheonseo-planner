@@ -4,7 +4,7 @@
 
 import os
 
-from _common import MODEL_CANDIDATES, list_models
+from _common import MODEL_CANDIDATES, list_models, pick_model
 
 
 def handle():
@@ -16,9 +16,8 @@ def handle():
         "modelCandidates": MODEL_CANDIDATES,
     }
     if api_key:
-        available = list_models(api_key)
-        body["availableModels"] = available[:20]
-        body["usableCandidate"] = next(
-            (m for m in MODEL_CANDIDATES if m in available), None
-        )
+        picked, available = pick_model(api_key)
+        body["availableModels"] = available[:25]
+        body["selectedModel"] = picked          # 앱이 실제로 쓸 모델
+        body["modelCount"] = len(available)
     return 200, body
