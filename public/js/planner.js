@@ -3,6 +3,7 @@
    흐름: 폼 입력 → 검증 → fetch('/api/generate') → 결과 렌더 → 저장/인쇄/현장
    ========================================================= */
 
+let requestSeq = 0;       // 요청 번호표. 늦게 도착한 옛 응답을 걸러냅니다.
 let currentPlan = null;   // 지금 화면에 떠 있는 계획서
 let lastPayload = null;   // 다시 시도용
 
@@ -238,9 +239,11 @@ function onGenerate(e) {
 
 async function sendRequest(payload) {
   if (!payload) return;
+  const mySeq = ++requestSeq;
   showResult("loading");
   const btn = document.getElementById("btnGenerate");
   btn.disabled = true;
+  scrollToResult();          // 모바일에서는 결과 영역이 폼 아래에 있어 미리 옮겨 둡니다
 
   // 지연/타임아웃 실패 처리: 45초가 지나면 요청을 끊습니다.
   const controller = new AbortController();
@@ -259,6 +262,8 @@ async function sendRequest(payload) {
       body: JSON.stringify(payload),
       signal: controller.signal
     });
+
+    if (mySeq !== requestSeq) return;
 
     // API 오류 실패 처리: 4xx / 5xx
     if (!res.ok) {
@@ -282,10 +287,18 @@ async function sendRequest(payload) {
       showError("결과를 읽지 못했습니다", "AI 응답 형식이 예상과 달랐습니다. 다시 시도해 주세요.");
       return;
     }
+    if (mySeq !== requestSeq) return;   // 그 사이 새로 요청했다면 이 응답은 버립니다
+
     currentPlan = Object.assign({}, payload, data.plan, { id: null, sources: data.sources || [] });
-    renderPlan(currentPlan);
+    try {
+      renderPlan(currentPlan);
+    } catch (renderErr) {
+      showError("결과를 그리지 못했습니다", "받아온 계획서를 화면에 배치하는 중 문제가 생겼습니다. (" + renderErr.message + ")");
+      return;
+    }
     showResult("body");
     toast("수업계획서가 만들어졌습니다.");
+    scrollToResult();
 
   } catch (err) {
     if (err.name === "AbortError") {
@@ -297,15 +310,33 @@ async function sendRequest(payload) {
     clearTimeout(timer);
     clearTimeout(slowMsg);
     btn.disabled = false;
+
+    // 어떤 이유로든 로딩 화면이 남아 있으면 그대로 두지 않습니다
+    if (mySeq === requestSeq &&
+        !document.getElementById("resultLoading").hidden) {
+      showError("결과를 받지 못했습니다",
+        "요청은 끝났는데 화면에 내용이 오지 않았습니다. [다시 시도]를 눌러 주세요.");
+    }
   }
+}
+
+/* 결과 영역으로 부드럽게 이동 — 모바일에서 폼이 길어 결과가 안 보이는 문제를 막습니다 */
+function scrollToResult() {
+  const panel = document.getElementById("resultPanel");
+  if (!panel) return;
+  const header = document.querySelector(".site-header");
+  const offset = (header ? header.offsetHeight : 0) + 8;
+  const top = panel.getBoundingClientRect().top + window.pageYOffset - offset;
+  window.scrollTo({ top: top, behavior: "smooth" });
 }
 
 /* ---------- 3) 화면 상태 ---------- */
 function showResult(state) {
-  document.getElementById("resultEmpty").hidden   = state !== "empty";
-  document.getElementById("resultLoading").hidden = state !== "loading";
-  document.getElementById("resultBody").hidden    = state !== "body";
-  document.getElementById("resultError").hidden   = state !== "error";
+  ["empty", "loading", "body", "error"].forEach(function (name) {
+    const el = document.getElementById(
+      "result" + name.charAt(0).toUpperCase() + name.slice(1));
+    if (el) el.hidden = (state !== name);
+  });
   if (state === "loading") {
     document.getElementById("loadingText").textContent = "숲을 걷는 중입니다… 수업계획서를 쓰고 있어요.";
     document.getElementById("loadingSub").textContent = "보통 10~25초가 걸립니다.";
@@ -316,6 +347,7 @@ function showError(title, message) {
   document.getElementById("errorTitle").textContent = title;
   document.getElementById("errorMessage").textContent = message;
   showResult("error");
+  if (typeof scrollToResult === "function") scrollToResult();
 }
 
 /* ---------- 4) 렌더 ---------- */
