@@ -4,11 +4,15 @@
 #   /api/health?probe=1   : 실제로 한 번 호출해 보고, 구글이 뭐라 답했는지 그대로 보여 줌
 #
 # 어느 경우에도 API 키 값 자체는 응답에 담기지 않습니다.
+#
+# 2026-08-30: GEMINI_MODEL 환경 변수에 API 키가 잘못 들어가 이 화면으로 노출된 적이
+# 있습니다. 그래서 지금은 모델 이름의 형태를 검사해, 형태가 맞는 값만 응답에 담습니다.
+# 형태가 어긋나면 값을 숨기고 modelEnvValid: false 로만 알립니다.
 
 import os
 
 from _common import (MODEL_CANDIDATES, api_error_text, build_body, list_models,
-                     model_url, pick_model)
+                     model_url, pick_model, safe_model_name)
 
 import requests
 
@@ -44,7 +48,10 @@ def handle(query=None):
         "ok": True,
         "service": "무자천서 플래너 API",
         "geminiKeyConfigured": bool(api_key),
-        "modelCandidates": MODEL_CANDIDATES,
+        # 후보 목록도 그대로 내보내지 않습니다. 형태가 맞는 이름만 남깁니다.
+        "modelCandidates": [m for m in MODEL_CANDIDATES if safe_model_name(m)],
+        "modelEnvValid": bool(safe_model_name(os.environ.get("GEMINI_MODEL"))
+                              ) if os.environ.get("GEMINI_MODEL") else None,
     }
     if not api_key:
         return 200, body

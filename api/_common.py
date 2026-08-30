@@ -16,9 +16,31 @@ API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 # 쓸 수 있는 모델 이름은 계정·시기에 따라 다릅니다.
 # 첫 번째부터 차례로 시도하고, 없다는 응답(404)이 오면 다음 후보로 넘어갑니다.
+# 환경 변수에 실수로 API 키 같은 비밀값이 들어가는 일이 실제로 있었습니다.
+# 모델 이름의 형태(영소문자·숫자·점·하이픈, 60자 이내)를 만족하고
+# 비밀값처럼 보이지 않는 경우에만 후보로 받아들입니다.
+_MODEL_RE = re.compile(r"^[a-z0-9][a-z0-9.\-]{2,59}$")
+_SECRETISH = ("aiza", "aq.", "sk-", "ya29.", "ghp_", "bearer")
+
+
+def safe_model_name(value):
+    """모델 이름으로 쓸 수 있는 값이면 그대로, 아니면 None 을 돌려줍니다."""
+    if not value:
+        return None
+    v = value.strip()
+    low = v.lower()
+    if any(low.startswith(p) for p in _SECRETISH):
+        return None
+    if not _MODEL_RE.match(low):
+        return None
+    if not low.startswith(("gemini", "gemma", "models/")):
+        return None
+    return v
+
+
 MODEL_CANDIDATES = [
     m for m in [
-        os.environ.get("GEMINI_MODEL"),   # 환경 변수로 지정하면 그것이 1순위
+        safe_model_name(os.environ.get("GEMINI_MODEL")),   # 형태가 맞을 때만 1순위
         # 실제 목록(/api/health)에서 확인된 이름만 씁니다.
         # lite 계열을 앞에 두는 이유: 무료 분당 한도가 가장 넉넉해 429 가 덜 납니다.
         "gemini-3.5-flash-lite",
@@ -183,13 +205,38 @@ def build_body(system_rules, prompt, mode):
     }
 
 
+# 밖으로 나가는 모든 문장에서 비밀값처럼 보이는 것을 지웁니다.
+# 구글의 오류 메시지가 요청 URL을 통째로 되돌려 주는 경우가 있기 때문입니다.
+_REDACT_RULES = [
+    (re.compile(r"(?i)([?&]key=)[^&\s\"']+"), r"\1[숨김]"),
+    (re.compile(r"(?i)\bAIza[0-9A-Za-z_\-]{10,}"), "[숨김]"),
+    (re.compile(r"(?i)\bAQ\.[0-9A-Za-z_\-]{10,}"), "[숨김]"),
+    (re.compile(r"(?i)\bya29\.[0-9A-Za-z_\-]{10,}"), "[숨김]"),
+    (re.compile(r"(?i)\bsk-[0-9A-Za-z_\-]{10,}"), "[숨김]"),
+    (re.compile(r"(?i)(Bearer\s+)[0-9A-Za-z._\-]{10,}"), r"\1[숨김]"),
+]
+
+
+def redact(text):
+    """키처럼 보이는 값을 지운 문자열을 돌려줍니다."""
+    out = str(text or "")
+    for pat, repl in _REDACT_RULES:
+        out = pat.sub(repl, out)
+    # 환경 변수에 실제로 들어 있는 비밀값이 그대로 실려 나가는 것도 막습니다.
+    for name in ("GEMINI_API_KEY", "GEMINI_MODEL"):
+        val = (os.environ.get(name) or "").strip()
+        if len(val) >= 12 and val in out:
+            out = out.replace(val, "[숨김]")
+    return out
+
+
 def api_error_text(res):
-    """구글이 돌려준 오류 설명을 짧게 뽑아냅니다(키 값은 절대 포함되지 않습니다)."""
+    """구글이 돌려준 오류 설명을 짧게 뽑아냅니다. 키처럼 보이는 값은 지웁니다."""
     try:
         msg = (res.json().get("error") or {}).get("message", "")
-        return (msg or "")[:300]
+        return redact(msg)[:300]
     except Exception:
-        return (res.text or "")[:200]
+        return redact(res.text)[:200]
 
 
 def call_gemini(api_key, system_rules, prompt, use_search=True, models=None):

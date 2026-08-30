@@ -301,3 +301,44 @@ AI 생성 결과는 **초안**입니다. 현장 안전과 종(種) 동정은 반
 학명이 왜 필요하고 왜 완벽하지 않은지가 한 번에 설명됩니다.
 
 「혼자 듣는 숲수업」에도 같은 이름의 코스(정거장 6곳)를 넣었습니다.
+
+---
+
+## 13. 비밀값 보호 (v1.10)
+
+### 무슨 일이 있었나
+`GEMINI_MODEL` 환경 변수에 모델 이름 대신 **API 키가 잘못 들어가**,
+공개 진단 화면 `/api/health` 의 `modelCandidates` 에 그 값이 그대로 노출되었습니다.
+발견 즉시 키를 폐기·재발급하고, 아래 두 겹의 장치를 넣었습니다.
+
+### ① 입력 검사 — `safe_model_name()`
+환경 변수의 값이 **모델 이름의 형태**일 때만 받아들입니다.
+
+- `gemini` / `gemma` / `models/` 로 시작
+- 영소문자·숫자·점·하이픈, 3~60자
+- `AIza` `AQ.` `ya29.` `sk-` `Bearer` 로 시작하면 무조건 거부
+
+형태가 어긋나면 그 값은 **후보에서 빠지고 응답에도 담기지 않으며**,
+`modelEnvValid: false` 로만 알립니다.
+
+### ② 출력 검사 — `redact()`
+밖으로 나가는 모든 문장에서 비밀값처럼 보이는 것을 지웁니다.
+구글의 오류 메시지가 요청 URL을 통째로 되돌려 주는 경우가 있기 때문입니다.
+
+| 지우는 것 | 결과 |
+|---|---|
+| `?key=…` / `&key=…` | `?key=[숨김]` |
+| `AIza…` `AQ.…` `ya29.…` `sk-…` | `[숨김]` |
+| `Bearer …` | `Bearer [숨김]` |
+| 환경 변수에 실제로 든 값과 일치하는 문자열 | `[숨김]` |
+
+`api_error_text()` 가 이 함수를 거치므로, `/api/generate` · `/api/discover` ·
+`/api/health?probe=1` 의 모든 오류 문구가 함께 보호됩니다.
+
+### 키가 새어 나간 것 같을 때
+1. https://aistudio.google.com/apikey 에서 해당 키 **삭제** 후 새로 발급
+2. Vercel → Settings → Environment Variables → `GEMINI_API_KEY` 교체
+   (`GEMINI_MODEL` 에는 **모델 이름만**. 비워 두어도 됩니다)
+3. Deployments → **Redeploy**
+4. `/api/health` 를 열어 `geminiKeyConfigured: true` 와
+   `modelEnvValid` 가 `null` 또는 `true` 인지 확인
