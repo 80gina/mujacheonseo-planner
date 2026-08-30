@@ -61,8 +61,17 @@ def handle(query=None):
     body["selectedModel"] = picked
     body["modelCount"] = len(available)
 
-    # ?probe=1 일 때만 실제로 호출해 봅니다
-    if (query.get("probe") or [""])[0] and picked:
-        body["probe"] = {"model": picked, "attempts": probe(api_key, picked)}
+    # 모델 목록을 하나도 못 받아 왔다면 키가 거부된 것입니다.
+    # 이때 구글이 실제로 뭐라고 답했는지 보여 줘야 원인을 찾을 수 있습니다.
+    if not available:
+        body["hint"] = ("모델 목록을 받지 못했습니다. GEMINI_API_KEY 값이 "
+                        "폐기되었거나 잘못 입력되었을 가능성이 큽니다. "
+                        "Vercel 환경 변수를 새 키로 바꾼 뒤 Redeploy 하세요.")
+
+    # ?probe=1 일 때는 실제로 호출해 봅니다.
+    # 고를 모델이 없더라도 기본 후보로 시험해, 구글의 오류 문구를 그대로 보여 줍니다.
+    if (query.get("probe") or [""])[0]:
+        target = picked or (MODEL_CANDIDATES[0] if MODEL_CANDIDATES else "gemini-3.5-flash-lite")
+        body["probe"] = {"model": target, "attempts": probe(api_key, target)}
 
     return 200, body
