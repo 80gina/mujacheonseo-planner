@@ -554,3 +554,13 @@ fieldset.field{border:0; padding:0; margin-inline:0;}
 #soloBody textarea{width:100%; font-size:16px; padding:.7rem .8rem; border:1px solid var(--line);
   border-radius:var(--radius-sm); background:var(--bg-soft); color:var(--text); font-family:inherit;}
 #soloBody .quote{font-family:var(--serif); font-size:1.02rem; line-height:1.75;}
+
+/* ---------- 13) 신화가 남긴 이름 ---------- */
+.here{display:inline-block; margin-left:.45rem; padding:.12em .5em; border-radius:999px;
+  font-size:.72rem; font-weight:600; vertical-align:middle; white-space:nowrap;}
+.here-seen{background:var(--accent-soft); color:var(--accent-strong);}
+.here-plant{background:var(--bg); color:var(--text-soft); border:1px solid var(--line);}
+.here-warm{background:var(--warn-soft); color:var(--warn);}
+.here-rare{background:var(--bg); color:var(--text-soft); border:1px dashed var(--line);}
+.here-sky{background:#e8e6f2; color:#4a4270;}
+[data-theme="dark"] .here-sky{background:#2b2a3d; color:#c3bde4;}
