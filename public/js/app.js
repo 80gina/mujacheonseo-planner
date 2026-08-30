@@ -35,7 +35,7 @@ function initNav() {
   });
 
   const start = (location.hash || "#home").slice(1);
-  const pages = ["home", "design", "library", "field", "archive", "status"];
+  const pages = ["home", "design", "library", "solo", "corpus", "field", "archive", "status"];
   navigate(pages.indexOf(start) >= 0 ? start : "home");
 }
 
@@ -152,6 +152,8 @@ document.addEventListener("DOMContentLoaded", function () {
   initNav();
   initPlanner();
   initLibrary();
+  initSolo();
+  initCorpus();
   initField();
   initArchive();
   initStatus();

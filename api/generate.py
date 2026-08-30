@@ -143,6 +143,14 @@ def build_prompt(data, wiki=None):
     if data.get("note"):
         lines += ["", "해설가의 추가 요청: %s" % data["note"]]
 
+    # 앱의 '해설 아카이브'에서 온 어휘 목록입니다.
+    # 억지로 다 쓰지 말고, 이 결에 맞는 관찰 지점을 고르라는 뜻으로 넣습니다.
+    archive = data.get("archive") or []
+    if archive:
+        lines += ["", "숲을 읽는 6대 분류 (관찰 지점을 잡을 때 이 어휘를 우선 고려하세요. 전부 쓸 필요는 없습니다):"]
+        for row in archive[:8]:
+            lines.append("  · %s" % row)
+
     framework = data.get("framework") or []
     if framework:
         lines += ["", "수업의 뼈대 (이 순서를 flow 에 반영할 것):"]

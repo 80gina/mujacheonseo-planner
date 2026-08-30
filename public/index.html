@@ -36,6 +36,8 @@
       <button class="nav-link is-active" data-nav="home">홈</button>
       <button class="nav-link" data-nav="design">수업 설계 <span class="badge-ai">AI</span></button>
       <button class="nav-link" data-nav="library">활동 도서관</button>
+      <button class="nav-link" data-nav="solo">혼자 듣는 수업</button>
+      <button class="nav-link" data-nav="corpus">해설 아카이브</button>
       <button class="nav-link" data-nav="field">현장 진행</button>
       <button class="nav-link" data-nav="archive">보관함 <span class="chip" id="archiveCount">0</span></button>
       <button class="nav-link" data-nav="status">상태</button>
@@ -334,7 +336,43 @@
   </div>
 </section>
 
-<!-- ===== 4. 현장 진행 (음성) ===== -->
+<!-- ===== 4. 혼자 듣는 숲수업 ===== -->
+<section class="page" id="page-solo">
+  <div class="wrap">
+    <h2 class="page-title">혼자 듣는 숲수업</h2>
+    <p class="page-sub">해설가가 없어도 앱이 대신 안내합니다. 대상을 고르고 코스를 시작하면
+       정거장마다 <b>찾기 → 해 보기 → 들어보기 → 물음</b> 순서로 진행합니다.
+       이어폰을 끼고 걸으면서 들으세요. 진행 위치는 이 기기에 저장됩니다.</p>
+    <div id="soloBody"></div>
+  </div>
+</section>
+
+<!-- ===== 5. 해설 아카이브 ===== -->
+<section class="page" id="page-corpus">
+  <div class="wrap">
+    <h2 class="page-title">해설 아카이브</h2>
+    <p class="page-sub">숲을 읽는 6대 분류, 화두 50선, 사실 확인을 통과한 노거수, 3박 4일 기행 코스입니다.
+       카드의 버튼을 누르면 그대로 수업 설계 폼에 실립니다.</p>
+
+    <div class="filters no-print" id="corpusTabs">
+      <span class="filter-label">갈래</span>
+      <button class="pill is-active" data-ctab="taxonomy">6대 분류 60</button>
+      <button class="pill" data-ctab="hwadu">화두 50선</button>
+      <button class="pill" data-ctab="trees">노거수</button>
+      <button class="pill" data-ctab="courses">3박 4일 코스 10</button>
+      <button class="pill" data-ctab="names">학명 40선</button>
+      <button class="pill" data-ctab="scenarios">5시간 시나리오</button>
+      <button class="pill" data-ctab="wilson">윌슨의 한반도</button>
+      <button class="pill" data-ctab="palace">동궐도 · 창덕궁</button>
+      <button class="pill" data-ctab="notes">현장 메모</button>
+      <button class="pill" data-ctab="corrections">정정 기록</button>
+    </div>
+
+    <div id="corpusBody"></div>
+  </div>
+</section>
+
+<!-- ===== 5. 현장 진행 (음성) ===== -->
 <section class="page" id="page-field">
   <div class="wrap">
     <h2 class="page-title">현장 진행</h2>
@@ -442,6 +480,8 @@
   <button data-nav="home"><span>🏠</span>홈</button>
   <button data-nav="design"><span>✎</span>설계</button>
   <button data-nav="library"><span>📚</span>도서관</button>
+  <button data-nav="solo"><span>🎧</span>혼자듣기</button>
+  <button data-nav="corpus"><span>🌳</span>아카이브</button>
   <button data-nav="field"><span>🔊</span>현장</button>
   <button data-nav="archive"><span>💾</span>보관함</button>
 </nav>
@@ -466,6 +506,8 @@
 <script src="js/library.js"></script>
 <script src="js/status.js"></script>
 <script src="js/pwa.js"></script>
+<script src="js/solo.js"></script>
+<script src="js/corpus.js"></script>
 <script src="js/field.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -220,6 +220,9 @@ function collectPayload() {
     }) || DIFFICULTY[1]),
     themes: themeIds.map(function (id) { return findTheme(id); }).filter(Boolean),
     note: document.getElementById("f-note").value.trim(),
+    // 해설 아카이브의 '숲을 읽는 6대 분류' 키워드를 함께 보냅니다.
+    // AI가 우리 앱과 같은 어휘로 관찰 지점을 잡게 하려는 것입니다.
+    archive: (typeof corpusBrief === "function") ? corpusBrief().taxonomy : null,
     module: m ? {
       id: m.id, name: m.name, subject: m.subject,
       question: m.question, steps: m.steps,

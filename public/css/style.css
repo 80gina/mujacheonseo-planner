@@ -541,3 +541,16 @@ fieldset.field{border:0; padding:0; margin-inline:0;}
   .plan-block > h4::after{content:"";}
   .flow-table tbody tr.is-done{opacity:1;}
 }
+
+/* ---------- 12) 혼자 듣는 숲수업 ---------- */
+.btn-row{display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.8rem;}
+.panel h4{margin:1.2rem 0 .4rem; font-size:.95rem; color:var(--accent-strong); letter-spacing:.02em;}
+.panel h4:first-of-type{margin-top:.8rem;}
+.table-wrap{overflow-x:auto; margin:.8rem 0;}
+.table-wrap table{width:100%; border-collapse:collapse; font-size:.9rem; min-width:26rem;}
+.table-wrap th,.table-wrap td{border:1px solid var(--line); padding:.55em .7em; text-align:left; vertical-align:top;}
+.table-wrap th{background:var(--accent-soft); color:var(--accent-strong); white-space:nowrap;}
+#soloBody .loadbar{margin:.2rem 0 1rem;}
+#soloBody textarea{width:100%; font-size:16px; padding:.7rem .8rem; border:1px solid var(--line);
+  border-radius:var(--radius-sm); background:var(--bg-soft); color:var(--text); font-family:inherit;}
+#soloBody .quote{font-family:var(--serif); font-size:1.02rem; line-height:1.75;}
