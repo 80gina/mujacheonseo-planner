@@ -430,6 +430,7 @@ function corpusHTML() {
       }).join("") + '</div>';
   }
   if (corpusTab === "myth") return mythHTML();
+  if (corpusTab === "lessons") return lessonsHTML();
   if (["names", "scenarios", "wilson", "palace", "notes"].indexOf(corpusTab) >= 0) {
     return corpusExtraHTML(corpusTab);
   }
@@ -456,11 +457,14 @@ function initCorpus() {
     tabs.querySelectorAll(".pill").forEach(function (p) {
       p.classList.toggle("is-active", p === btn);
     });
+    if (typeof Voice !== "undefined" && Voice.stop) Voice.stop();
+    if (corpusTab === "lessons") { openLessons(); return; }
     renderCorpus();
   });
 
   const body = document.getElementById("corpusBody");
   body.addEventListener("click", function (e) {
+    if (typeof handleLessonClick === "function" && handleLessonClick(e)) return;
     const h = e.target.closest("[data-hwadu]");
     if (h) { useHwadu(h.getAttribute("data-hwadu")); return; }
     const c = e.target.closest("[data-course]");

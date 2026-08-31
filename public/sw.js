@@ -5,13 +5,13 @@
    (AI 호출은 인터넷이 필요하므로 항상 네트워크로 보냅니다)
    ========================================================= */
 
-const CACHE = "mujacheonseo-v3";
+const CACHE = "mujacheonseo-v4";
 const SHELL = [
   "./", "./index.html",
   "./css/style.css",
   "./js/data.js", "./js/storage.js", "./js/voice.js",
   "./js/planner.js", "./js/discover.js", "./js/library.js",
-  "./js/solo.js", "./js/corpus.js", "./js/field.js", "./js/status.js", "./js/pwa.js", "./js/app.js",
+  "./js/solo.js", "./js/lessons.js", "./js/corpus.js", "./js/field.js", "./js/status.js", "./js/pwa.js", "./js/app.js",
   "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"
 ];
 

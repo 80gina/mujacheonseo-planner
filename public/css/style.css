@@ -564,3 +564,11 @@ fieldset.field{border:0; padding:0; margin-inline:0;}
 .here-rare{background:var(--bg); color:var(--text-soft); border:1px dashed var(--line);}
 .here-sky{background:#e8e6f2; color:#4a4270;}
 [data-theme="dark"] .here-sky{background:#2b2a3d; color:#c3bde4;}
+
+/* ---------- 14) 100차시 교육과정 ---------- */
+.card.lesson{display:flex; flex-direction:column;}
+.card.lesson.is-open{grid-column:1 / -1; border-color:var(--accent); box-shadow:var(--shadow);}
+.card.lesson h4{margin:1rem 0 .3rem; font-size:.9rem; color:var(--accent-strong);}
+.card.lesson p{margin:0;}
+.card.lesson .quote{font-family:var(--serif); line-height:1.75;}
+#lessonSeason,#lessonArea{margin-bottom:.7rem;}
