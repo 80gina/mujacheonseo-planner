@@ -256,12 +256,7 @@ async function sendRequest(payload) {
   // 지연/타임아웃 실패 처리: 45초가 지나면 요청을 끊습니다.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), APP.apiTimeoutMs);
-  const slowMsg = setTimeout(() => {
-    document.getElementById("loadingText").textContent =
-      "응답이 지연되고 있습니다. 잠시만 기다려 주세요...";
-    document.getElementById("loadingSub").textContent =
-      "숲이 깊어 답이 늦어지고 있습니다. 45초가 지나면 자동으로 중단합니다.";
-  }, 12000);
+  const startedAt = Date.now();
 
   try {
     const res = await fetch("/api/generate", {
@@ -305,6 +300,7 @@ async function sendRequest(payload) {
       return;
     }
     showResult("body");
+    showDoneMessage((Date.now() - startedAt) / 1000);
     toast("수업계획서가 만들어졌습니다.");
     scrollToResult();
 
@@ -316,7 +312,7 @@ async function sendRequest(payload) {
     }
   } finally {
     clearTimeout(timer);
-    clearTimeout(slowMsg);
+    stopLoadingMessages();
     btn.disabled = false;
 
     // 어떤 이유로든 로딩 화면이 남아 있으면 그대로 두지 않습니다
@@ -339,6 +335,75 @@ function scrollToResult() {
 }
 
 /* ---------- 3) 화면 상태 ---------- */
+
+/* 생성 전 — 누를 때마다 다른 쓰임새를 보여 줍니다 */
+const EMPTY_TIPS = [
+  "대상을 「초등 3~4학년」으로 두면 활동이 짧아지고 질문이 쉬워집니다.",
+  "장소에 「비 오는 날 실내 대안 필요」처럼 적어 두면 우천 대안까지 들어옵니다.",
+  "활동 도서관에서 모듈을 먼저 고르면 철학과 활동이 자동으로 채워집니다.",
+  "요청 사항에 「휠체어 이용 참가자가 있어요」를 적으면 이동 동선을 함께 잡아 줍니다.",
+  "소재가 떠오르지 않으면 자료 찾기에서 나무 이름부터 검색해 보세요."
+];
+let emptyTipAt = 0;
+
+/* 생성 중 — 지나간 시간에 따라 지금 무엇을 하고 있는지 알립니다 */
+const LOADING_STAGES = [
+  { at: 0,  text: "조건을 살펴보고 있습니다.",                    sub: "고른 대상과 장소에 맞는 흐름을 잡는 중입니다." },
+  { at: 4,  text: "숲을 걷는 중입니다… 어느 나무 앞에 설지 고르고 있어요.", sub: "보통 10~25초가 걸립니다." },
+  { at: 9,  text: "활동을 시간표에 얹고 있습니다.",                sub: "도입 · 전개 · 마무리 순서를 맞추는 중입니다." },
+  { at: 15, text: "안전 유의사항과 우천 대안을 붙이고 있습니다.",    sub: "조금만 더 기다려 주세요." },
+  { at: 22, text: "마무리 질문을 다듬고 있습니다.",                sub: "거의 끝났습니다." },
+  { at: 30, text: "응답이 지연되고 있습니다.",                     sub: "숲이 깊어 답이 늦어지고 있습니다. 45초가 지나면 자동으로 중단합니다." },
+  { at: 40, text: "곧 요청을 중단합니다.",                        sub: "45초를 넘기면 끊고 [다시 시도] 버튼을 보여 드립니다." }
+];
+let loadingTimer = null;
+
+/* 생성 후 — 걸린 시간과 다음에 할 일을 안내합니다 */
+const DONE_TIPS = [
+  "마음에 들면 💾 보관함에 저장해 두세요. 이 브라우저 안에만 남습니다.",
+  "현장에서 쓰려면 🔊 현장 진행으로 보내기를 눌러 타이머와 음성 안내를 켜세요.",
+  "종이로 들고 갈 거라면 🖨️ 인쇄 / PDF 를 눌러 주세요.",
+  "아래 내용은 그대로 고쳐 쓸 수 있습니다. 현장에 맞게 손보고 쓰세요.",
+  "▶ 읽어 주기를 누르면 계획서를 소리로 확인할 수 있습니다."
+];
+let doneTipAt = 0;
+
+function startLoadingMessages() {
+  stopLoadingMessages();
+  const began = Date.now();
+  let shown = -1;
+  const tick = function () {
+    const sec = (Date.now() - began) / 1000;
+    let idx = 0;
+    for (let i = 0; i < LOADING_STAGES.length; i++) {
+      if (sec >= LOADING_STAGES[i].at) idx = i;
+    }
+    if (idx === shown) return;
+    shown = idx;
+    const st = LOADING_STAGES[idx];
+    const t = document.getElementById("loadingText");
+    const b = document.getElementById("loadingSub");
+    if (t) t.textContent = st.text;
+    if (b) b.textContent = st.sub;
+  };
+  tick();
+  loadingTimer = setInterval(tick, 700);
+  return began;
+}
+
+function stopLoadingMessages() {
+  if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
+}
+
+function showDoneMessage(seconds) {
+  const el = document.getElementById("resultDone");
+  if (!el) return;
+  const tip = DONE_TIPS[doneTipAt % DONE_TIPS.length];
+  doneTipAt++;
+  const took = (seconds && seconds > 0) ? Math.round(seconds) + "초 만에 " : "";
+  el.textContent = "✅ " + took + "수업계획서가 나왔습니다. " + tip;
+}
+
 function showResult(state) {
   ["empty", "loading", "body", "error"].forEach(function (name) {
     const el = document.getElementById(
@@ -346,8 +411,16 @@ function showResult(state) {
     if (el) el.hidden = (state !== name);
   });
   if (state === "loading") {
-    document.getElementById("loadingText").textContent = "숲을 걷는 중입니다… 수업계획서를 쓰고 있어요.";
-    document.getElementById("loadingSub").textContent = "보통 10~25초가 걸립니다.";
+    startLoadingMessages();
+  } else {
+    stopLoadingMessages();
+  }
+  if (state === "empty") {
+    const tip = document.getElementById("emptyTip");
+    if (tip) {
+      tip.textContent = "💡 " + EMPTY_TIPS[emptyTipAt % EMPTY_TIPS.length];
+      emptyTipAt++;
+    }
   }
 }
 

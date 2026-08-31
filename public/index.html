@@ -280,15 +280,16 @@
       <div class="panel result" id="resultPanel">
         <div class="result-empty" id="resultEmpty">
           <div class="card-icon">🌿</div>
-          <p>왼쪽 조건을 채우고 <b>수업계획서 생성</b>을 눌러 주세요.<br />
+          <p id="emptyText">왼쪽 조건을 채우고 <b>수업계획서 생성</b>을 눌러 주세요.<br />
              결과가 여기에 나타납니다.</p>
+          <p class="hint result-tip" id="emptyTip"></p>
         </div>
 
-        <div class="result-loading" id="resultLoading" hidden>
+        <div class="result-loading" id="resultLoading" hidden aria-live="polite">
           <div class="spinner"></div>
-          <p id="loadingText">숲을 걷는 중입니다… 수업계획서를 쓰고 있어요.</p>
+          <p id="loadingText">조건을 살펴보고 있습니다.</p>
           <div class="loadbar" aria-hidden="true"><div class="loadbar-fill"></div></div>
-          <p class="hint" id="loadingSub">보통 10~25초가 걸립니다.</p>
+          <p class="hint" id="loadingSub">고른 대상과 장소에 맞는 흐름을 잡는 중입니다.</p>
         </div>
 
         <div class="alert" id="resultError" hidden role="alert">
@@ -298,6 +299,7 @@
         </div>
 
         <div id="resultBody" hidden>
+          <p class="result-done no-print" id="resultDone" aria-live="polite"></p>
           <div class="result-toolbar no-print">
             <button class="btn btn-primary btn-sm" id="btnSave">💾 보관함에 저장</button>
             <button class="btn btn-sm" id="btnPrint">🖨️ 인쇄 / PDF</button>
