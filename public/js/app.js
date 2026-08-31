@@ -2,8 +2,12 @@
    app.js — 네비게이션 · 테마 · 보관함 · 앱 시작점
    ========================================================= */
 
-/* ---------- 페이지 이동 ---------- */
-function navigate(name) {
+/* ---------- 페이지 이동 ----------
+   예전에는 history.replaceState 를 써서 섹션 이동이 기록에 남지 않았습니다.
+   그 탓에 뒤로 가기를 누르면 앱을 통째로 벗어났습니다.
+   지금은 pushState 로 쌓고 popstate 로 되돌립니다.
+   (뒤로 가기로 돌아올 때는 다시 쌓지 않도록 fromHistory 로 구분합니다) */
+function navigate(name, fromHistory) {
   document.querySelectorAll(".page").forEach(function (p) {
     p.classList.toggle("is-active", p.id === "page-" + name);
   });
@@ -22,7 +26,9 @@ function navigate(name) {
   if (typeof keepAwake === "function") keepAwake(name === "field");
   document.getElementById("siteNav").classList.remove("is-open");
   document.getElementById("navToggle").setAttribute("aria-expanded", "false");
-  if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
+  if (!fromHistory && location.hash !== "#" + name) {
+    history.pushState({ page: name }, "", "#" + name);
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   // 키보드·화면낭독기 사용자를 위해 새 섹션의 제목으로 포커스를 옮깁니다.
@@ -46,9 +52,18 @@ function initNav() {
     toggle.setAttribute("aria-expanded", String(open));
   });
 
-  const start = (location.hash || "#home").slice(1);
   const pages = ["home", "design", "library", "solo", "corpus", "field", "archive", "status"];
-  navigate(pages.indexOf(start) >= 0 ? start : "home");
+
+  // 뒤로 / 앞으로 가기
+  window.addEventListener("popstate", function (e) {
+    const name = (e.state && e.state.page) || (location.hash || "#home").slice(1);
+    navigate(pages.indexOf(name) >= 0 ? name : "home", true);
+  });
+
+  const start = (location.hash || "#home").slice(1);
+  const first = pages.indexOf(start) >= 0 ? start : "home";
+  history.replaceState({ page: first }, "", "#" + first);   // 첫 화면은 쌓지 않고 표시만
+  navigate(first, true);
 }
 
 /* ---------- 다크 모드 ---------- */
@@ -68,6 +83,59 @@ function initTheme() {
   });
 }
 
+
+/* ---------- 탭 키보드 이동 ----------
+   화면낭독기 사용자는 탭 하나하나를 Tab 키로 지나가는 대신
+   화살표로 옮겨 다니는 것을 기대합니다 (WAI-ARIA Tabs 패턴).
+   목록 안에서 ← → Home End 를 처리합니다. */
+function enableTabKeys(container, selector) {
+  const box = typeof container === "string" ? document.getElementById(container) : container;
+  if (!box) return;
+  box.addEventListener("keydown", function (e) {
+    const keys = ["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"];
+    if (keys.indexOf(e.key) < 0) return;
+    const tabs = Array.prototype.slice.call(box.querySelectorAll(selector));
+    const i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    e.preventDefault();
+    let next = i;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % tabs.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + tabs.length) % tabs.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = tabs.length - 1;
+    tabs[next].focus();
+    tabs[next].click();      // 화살표로 옮기면 바로 그 탭이 열립니다
+  });
+}
+
+/* ---------- 삭제 되돌리기 ----------
+   지운 것을 10초 동안 들고 있다가, 그 사이 「되돌리기」를 누르면 되살립니다.
+   확인 창(confirm)만으로는 실수를 되돌릴 수 없어서 넣었습니다. */
+let undoBin = null;
+let undoTimer = null;
+
+function offerUndo(label, restore) {
+  clearTimeout(undoTimer);
+  if (typeof toastTimer !== "undefined") clearTimeout(toastTimer);  // 일반 토스트가 먼저 닫지 않게
+  undoBin = restore;
+  const box = document.getElementById("toast");
+  box.setAttribute("role", "status");
+  box.setAttribute("aria-live", "polite");
+  box.innerHTML = esc(label) + ' <button class="toast-undo" type="button" id="btnUndo">되돌리기</button>';
+  box.hidden = false;
+  document.getElementById("btnUndo").onclick = function () {
+    if (undoBin) { undoBin(); undoBin = null; }
+    clearTimeout(undoTimer);
+    box.innerHTML = "";
+    box.hidden = true;
+    toast("되돌렸습니다.");
+  };
+  undoTimer = setTimeout(function () {
+    undoBin = null;
+    box.innerHTML = "";
+    box.hidden = true;
+  }, 10000);
+}
 
 /* ---------- 저장 현황 ---------- */
 function refreshStoreStats() {
@@ -120,11 +188,17 @@ function initArchiveTabs() {
     const b = e.target.closest("[data-memo-act]");
     if (!b) return;
     const at = e.target.closest(".archive-item").dataset.at;
-    if (confirm("이 기록을 지울까요? 되돌릴 수 없습니다.")) {
-      Store.removeMemo(at);
+    const gone = Store.memos().filter(function (m) { return (m.id || m.at) === at; })[0];
+    Store.removeMemo(at);
+    refreshMemos();
+    offerUndo("기록을 지웠습니다.", function () {
+      if (!gone) return;
+      const list = Store.memos();
+      list.unshift(gone);
+      list.sort(function (a, b) { return (b.at || "").localeCompare(a.at || ""); });
+      try { localStorage.setItem(Store.BACKUP_KEYS.memos, JSON.stringify(list)); } catch (e) {}
       refreshMemos();
-      toast("지웠습니다.");
-    }
+    });
   });
   refreshMemos();
 }
@@ -202,11 +276,13 @@ function initArchive() {
       navigate("field");
       loadFieldPlan(id);
     } else if (btn.dataset.act === "del") {
-      if (confirm("‘" + plan.title + "’ 을(를) 삭제할까요? 되돌릴 수 없습니다.")) {
-        Store.remove(id);
-        refreshArchive(); refreshFieldSelect();
-        toast("삭제했습니다.");
-      }
+      const backup = JSON.parse(JSON.stringify(plan));
+      Store.remove(id);
+      refreshArchive(); refreshFieldSelect(); refreshStoreStats();
+      offerUndo("‘" + plan.title + "’ 을(를) 지웠습니다.", function () {
+        Store.save(backup);
+        refreshArchive(); refreshFieldSelect(); refreshStoreStats();
+      });
     }
   });
 
@@ -251,6 +327,10 @@ document.addEventListener("DOMContentLoaded", function () {
   initField();
   initArchive();
   initSearch();
+  enableTabKeys("corpusTabs", "[data-ctab]");
+  enableTabKeys("archiveTabs", "[data-atab]");
+  enableTabKeys("libraryFilters", ".pill");
+  enableTabKeys("themeFilters", ".pill");
   initNetworkNotice();
   initStatus();
   initPWA();

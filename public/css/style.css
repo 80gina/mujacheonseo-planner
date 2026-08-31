@@ -628,3 +628,16 @@ fieldset.field{border:0; padding:0; margin-inline:0;}
   .grid-3{grid-template-columns:1fr;}
   .tab-group .filter-label{min-width:100%; margin-bottom:.15rem;}
 }
+
+/* ---------- 20) 삭제 되돌리기 ---------- */
+.toast-undo{margin-left:.7rem; padding:.25em .8em; border-radius:999px; cursor:pointer;
+  background:transparent; color:inherit; border:1px solid currentColor; font:inherit;
+  font-size:.9em; font-weight:600;}
+.toast-undo:hover{background:rgba(255,255,255,.15);}
+
+/* ---------- 21) 결과 수 배지 ---------- */
+.count-badge{display:inline-block; padding:.15em .7em; border-radius:999px;
+  background:var(--accent-soft); color:var(--accent-strong);
+  font-size:.82rem; font-weight:600; white-space:nowrap;}
+.count-badge:empty{display:none;}
+.count-line{margin:-.4rem 0 1rem;}

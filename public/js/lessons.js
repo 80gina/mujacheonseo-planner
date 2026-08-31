@@ -105,7 +105,14 @@ function lessonsHTML() {
 
 function renderLessons() {
   const box = document.getElementById("corpusBody");
-  if (box && corpusTab === "lessons") box.innerHTML = lessonsHTML();
+  if (!box || corpusTab !== "lessons") return;
+  const cnt = document.getElementById("corpusCount");
+  if (cnt) {
+    const n = filteredLessons().length;
+    cnt.textContent = (n === (LESSONS || []).length)
+      ? n + "차시" : (LESSONS || []).length + "차시 중 " + n + "차시";
+  }
+  box.innerHTML = lessonsHTML();
 }
 
 async function openLessons() {

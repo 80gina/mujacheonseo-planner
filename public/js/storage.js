@@ -140,7 +140,9 @@ const Store = {
           const ids = cur.map(function (m) { return m.id; });
           let n = 0;
           data.modules.forEach(function (m) {
-            if (m && ids.indexOf(m.id) < 0) { cur.push(m); n++; }
+            // 최소한 id 와 활동 이름이 있어야 모듈로 받아들입니다
+            const ok = m && typeof m === "object" && m.id && (m.activity || m.name);
+            if (ok && ids.indexOf(m.id) < 0) { cur.push(m); n++; }
           });
           if (n) {
             try { localStorage.setItem(Store.BACKUP_KEYS.modules, JSON.stringify(cur)); } catch (e) {}
@@ -235,6 +237,7 @@ function toast(message) {
     box.setAttribute("aria-atomic", "true");
   }
   const el = document.getElementById("toast");
+  el.innerHTML = "";          // 되돌리기 버튼이 남아 있을 수 있어 비우고 시작합니다
   el.textContent = message;
   el.hidden = false;
   clearTimeout(toastTimer);

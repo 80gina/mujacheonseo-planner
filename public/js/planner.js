@@ -505,8 +505,20 @@ function savePlan() {
   const s = view.querySelector(".plan-block p[contenteditable]");
   if (s) currentPlan.summary = s.textContent.trim();
 
+  const first = !Store.count();     // 이번이 첫 저장인지
   Store.save(currentPlan);
   refreshArchive();
   refreshFieldSelect();
-  toast("보관함에 저장했습니다.");
+  if (typeof refreshStoreStats === "function") refreshStoreStats();
+
+  // 저장한 것이 어디에 있는지 처음 한 번은 분명히 알려 줍니다.
+  // 브라우저를 정리하면 사라진다는 것을 모르고 잃는 일이 없도록.
+  let told = false;
+  try { told = localStorage.getItem("mujacheonseo.savedNotice") === "1"; } catch (e) {}
+  if (first && !told) {
+    try { localStorage.setItem("mujacheonseo.savedNotice", "1"); } catch (e) {}
+    toast("보관함에 저장했습니다. 이 계획서는 이 브라우저 안에만 있습니다 — 보관함에서 가끔 백업해 두세요.");
+  } else {
+    toast("보관함에 저장했습니다.");
+  }
 }

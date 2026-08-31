@@ -347,6 +347,7 @@
 
     <div class="filters no-print" id="libraryFilters">
       <span class="filter-label">활동 유형</span>
+      <span class="count-badge" id="libraryCount" aria-live="polite"></span>
       <button class="pill is-active" data-filter="all">전체</button>
       <button class="pill" data-filter="오감 관찰">오감 관찰</button>
       <button class="pill" data-filter="신체 모사·놀이">신체 모사</button>
@@ -419,9 +420,11 @@
       </div>
       <div class="tab-group tab-group-mark">
         <span class="filter-label">확인의 기록</span>
-        <button class="pill pill-mark" role="tab" aria-selected="false" data-ctab="corrections">✎ 정정 기록 18</button>
+        <button class="pill pill-mark" role="tab" aria-selected="false" data-ctab="corrections">✎ 정정 기록</button>
       </div>
     </div>
+
+    <p class="count-line no-print"><span class="count-badge" id="corpusCount" aria-live="polite"></span></p>
 
     <div id="corpusBody"></div>
   </div>

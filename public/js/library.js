@@ -6,6 +6,14 @@ let libraryFilter = "all";
 let themeFilter = "all";
 
 function moduleCardHTML(m, compact) {
+  // 백업을 잘못 불러오거나 자료가 손상돼도 화면 전체가 깨지지 않게 기본값을 채웁니다
+  m = Object.assign({
+    id: "?", activity: "(이름 없는 활동)", subject: "", philosophy: "", question: "",
+    steps: [], materials: [], safety: "", types: [], themes: [], season: [], target: ""
+  }, m || {});
+  ["steps", "materials", "types", "themes", "season"].forEach(function (k) {
+    if (!Array.isArray(m[k])) m[k] = [];
+  });
   return `
     <button class="card module-card" data-module="${m.id}" type="button">
       <span class="module-tag">${m.custom ? "내 모듈" : "모듈 " + m.id}</span>${m.custom ? '<span class="custom-tag">AI 생성</span>' : ""}
@@ -33,6 +41,14 @@ function renderLibrary() {
     const okTheme = themeFilter === "all" || (m.themes || []).indexOf(themeFilter) >= 0;
     return okType && okTheme;
   });
+
+  // 필터를 걸었을 때 몇 건이 남았는지 알려 줍니다
+  const cnt = document.getElementById("libraryCount");
+  if (cnt) {
+    cnt.textContent = (list.length === source.length)
+      ? "모듈 " + source.length + "개"
+      : source.length + "개 중 " + list.length + "개";
+  }
 
   const grid = document.getElementById("libraryGrid");
   grid.innerHTML = list.length

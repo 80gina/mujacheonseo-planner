@@ -441,9 +441,30 @@ function corpusHTML() {
     }).join("") + '</div>';
 }
 
+const TAB_COUNT = {
+  taxonomy: function () { return taxonomyFlat().length + "개 키워드"; },
+  hwadu: function () { return hwaduFlat().length + "선"; },
+  trees: function () { return TREES.length + "그루"; },
+  courses: function () { return COURSES.length + "코스"; },
+  names: function () { return NAMES.length + "종 · 어원 " + ETYMOLOGY.length + "개"; },
+  myth: function () { return MYTHS.length + "항목 · 뺀 이야기 " + MYTH_DROPPED.length; },
+  scenarios: function () { return SCENARIOS.length + "일 과정"; },
+  palace: function () { return PALACE.length + "일 답사"; },
+  notes: function () { return FIELDNOTES.length + "편"; },
+  corrections: function () { return CORRECTIONS.length + "건"; },
+  wilson: function () { return WILSON.route.length + "곳 · 30회"; },
+  lessons: function () { return LESSONS ? LESSONS.length + "차시" : ""; }
+};
+
 function renderCorpus() {
   const box = document.getElementById("corpusBody");
   if (!box) return;
+  const cnt = document.getElementById("corpusCount");
+  if (cnt) {
+    let text = "";
+    try { text = TAB_COUNT[corpusTab] ? TAB_COUNT[corpusTab]() : ""; } catch (e) {}
+    cnt.textContent = text;
+  }
   box.innerHTML = corpusHTML();
 }
 
