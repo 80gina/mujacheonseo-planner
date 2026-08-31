@@ -641,3 +641,6 @@ fieldset.field{border:0; padding:0; margin-inline:0;}
   font-size:.82rem; font-weight:600; white-space:nowrap;}
 .count-badge:empty{display:none;}
 .count-line{margin:-.4rem 0 1rem;}
+
+/* ---------- 22) 화면 준비 안내 ---------- */
+.section-loading{opacity:.7;}

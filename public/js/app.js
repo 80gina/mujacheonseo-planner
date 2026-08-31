@@ -2,6 +2,89 @@
    app.js — 네비게이션 · 테마 · 보관함 · 앱 시작점
    ========================================================= */
 
+
+/* ---------- 화면별 지연 로딩 ----------
+   예전에는 첫 방문에 자바스크립트 16개(306KB)를 통째로 받았습니다.
+   숲에서는 신호가 약해 그 무게가 곧 이탈이 됩니다.
+   지금은 첫 화면에 필요한 것만 받고, 나머지는 그 화면에 처음 들어갈 때 받습니다.
+   서비스 워커가 미리 캐시해 두므로 두 번째 방문부터는 기다림이 없습니다. */
+const SECTION_SCRIPTS = {
+  corpus: ["js/corpus.js", "js/lessons.js", "js/search.js"],
+  solo:   ["js/solo.js"],
+  field:  ["js/field.js"],
+  status: ["js/status.js"]
+};
+
+const SECTION_INIT = {
+  corpus: function () {
+    initCorpus();
+    initSearch();
+    enableTabKeys("corpusTabs", "[data-ctab]");
+  },
+  solo:   function () { initSolo(); },
+  field:  function () { initField(); },
+  status: function () { initStatus(); }
+};
+
+const sectionLoaded = {};
+const sectionLoading = {};
+
+function loadScript(src) {
+  return new Promise(function (resolve, reject) {
+    const el = document.createElement("script");
+    el.src = src;
+    el.async = false;              // 적은 순서대로 실행되게 합니다
+    el.onload = function () { resolve(); };
+    el.onerror = function () { reject(new Error(src)); };
+    document.head.appendChild(el);
+  });
+}
+
+function loadSection(name) {
+  if (sectionLoaded[name]) return Promise.resolve();
+  if (sectionLoading[name]) return sectionLoading[name];
+
+  const files = SECTION_SCRIPTS[name];
+  if (!files) { sectionLoaded[name] = true; return Promise.resolve(); }
+
+  const page = document.getElementById("page-" + name);
+  const wrap = page && page.querySelector(".wrap");
+  let hint = null;
+  if (wrap) {
+    hint = document.createElement("p");
+    hint.className = "hint section-loading";
+    hint.textContent = "화면을 준비하는 중입니다…";
+    wrap.appendChild(hint);
+  }
+
+  sectionLoading[name] = files.reduce(function (chain, f) {
+    return chain.then(function () { return loadScript(f); });
+  }, Promise.resolve()).then(function () {
+    sectionLoaded[name] = true;
+    if (hint) hint.remove();
+    const init = SECTION_INIT[name];
+    if (init) init();
+  }).catch(function (err) {
+    if (hint) {
+      hint.className = "alert";
+      hint.setAttribute("role", "alert");
+      hint.textContent = "이 화면을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요.";
+    }
+    sectionLoading[name] = null;
+    throw err;
+  });
+  return sectionLoading[name];
+}
+
+/* 홈의 「자료 찾기」 버튼 — 검색 코드가 아직 없을 수 있어 여기서 받아 옵니다 */
+function focusSearch() {
+  navigate("corpus");
+  loadSection("corpus").then(function () {
+    const el = document.getElementById("globalSearch");
+    if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+  }).catch(function () {});
+}
+
 /* ---------- 페이지 이동 ----------
    예전에는 history.replaceState 를 써서 섹션 이동이 기록에 남지 않았습니다.
    그 탓에 뒤로 가기를 누르면 앱을 통째로 벗어났습니다.
@@ -22,6 +105,9 @@ function navigate(name, fromHistory) {
     b.classList.toggle("is-active", on);
     if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
+  // 이 화면에 필요한 코드를 아직 안 받았으면 지금 받습니다
+  loadSection(name).catch(function () { /* 안내는 loadSection 이 화면에 표시합니다 */ });
+
   // 현장 진행 화면에서는 화면이 꺼지지 않게 합니다
   if (typeof keepAwake === "function") keepAwake(name === "field");
   document.getElementById("siteNav").classList.remove("is-open");
@@ -106,6 +192,11 @@ function enableTabKeys(container, selector) {
     tabs[next].focus();
     tabs[next].click();      // 화살표로 옮기면 바로 그 탭이 열립니다
   });
+}
+
+/* 현장 진행 목록 새로고침 — 아직 그 화면 코드를 안 받았으면 조용히 넘어갑니다 */
+function safeRefreshField() {
+  if (typeof refreshFieldSelect === "function") refreshFieldSelect();
 }
 
 /* ---------- 삭제 되돌리기 ----------
@@ -246,7 +337,7 @@ function initArchive() {
     if (!f) return;
     Store.importFile(f, function (err, n, notes) {
       if (err) return toast("파일을 읽지 못했습니다. 무자천서 백업 파일이 맞는지 확인해 주세요.");
-      refreshArchive(); refreshFieldSelect(); refreshMemos();
+      refreshArchive(); safeRefreshField(); refreshMemos();
       if (typeof refreshModuleSelect === "function") refreshModuleSelect();
       if (typeof renderLibrary === "function") renderLibrary();
       const parts = [];
@@ -274,14 +365,15 @@ function initArchive() {
       printPlanHTML(document.getElementById("planView").innerHTML, plan.title);
     } else if (btn.dataset.act === "field") {
       navigate("field");
-      loadFieldPlan(id);
+      // 현장 진행 코드를 받은 뒤에 계획서를 싣습니다
+      loadSection("field").then(function () { loadFieldPlan(id); }).catch(function () {});
     } else if (btn.dataset.act === "del") {
       const backup = JSON.parse(JSON.stringify(plan));
       Store.remove(id);
-      refreshArchive(); refreshFieldSelect(); refreshStoreStats();
+      refreshArchive(); safeRefreshField(); refreshStoreStats();
       offerUndo("‘" + plan.title + "’ 을(를) 지웠습니다.", function () {
         Store.save(backup);
-        refreshArchive(); refreshFieldSelect(); refreshStoreStats();
+        refreshArchive(); safeRefreshField(); refreshStoreStats();
       });
     }
   });
@@ -322,17 +414,11 @@ document.addEventListener("DOMContentLoaded", function () {
   initNav();
   initPlanner();
   initLibrary();
-  initSolo();
-  initCorpus();
-  initField();
   initArchive();
-  initSearch();
-  enableTabKeys("corpusTabs", "[data-ctab]");
   enableTabKeys("archiveTabs", "[data-atab]");
   enableTabKeys("libraryFilters", ".pill");
   enableTabKeys("themeFilters", ".pill");
   initNetworkNotice();
-  initStatus();
   initPWA();
   console.log("[무자천서 플래너] 준비 완료");
 });

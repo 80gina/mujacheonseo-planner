@@ -129,7 +129,12 @@ function initPlanner() {
     if (!currentPlan) return;
     if (!currentPlan.id) savePlan();
     navigate("field");
-    loadFieldPlan(currentPlan.id);
+    // 현장 진행 코드를 아직 안 받았을 수 있습니다
+    if (typeof loadSection === "function") {
+      loadSection("field").then(function () { loadFieldPlan(currentPlan.id); }).catch(function () {});
+    } else {
+      loadFieldPlan(currentPlan.id);
+    }
   });
   document.getElementById("btnSpeakPlan").addEventListener("click", function () {
     if (!currentPlan) return;
@@ -508,7 +513,7 @@ function savePlan() {
   const first = !Store.count();     // 이번이 첫 저장인지
   Store.save(currentPlan);
   refreshArchive();
-  refreshFieldSelect();
+  if (typeof safeRefreshField === "function") safeRefreshField(); else if (typeof refreshFieldSelect === "function") refreshFieldSelect();
   if (typeof refreshStoreStats === "function") refreshStoreStats();
 
   // 저장한 것이 어디에 있는지 처음 한 번은 분명히 알려 줍니다.

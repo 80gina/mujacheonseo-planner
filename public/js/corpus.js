@@ -453,7 +453,9 @@ const TAB_COUNT = {
   notes: function () { return FIELDNOTES.length + "편"; },
   corrections: function () { return CORRECTIONS.length + "건"; },
   wilson: function () { return WILSON.route.length + "곳 · 30회"; },
-  lessons: function () { return LESSONS ? LESSONS.length + "차시" : ""; }
+  lessons: function () {
+    return (typeof LESSONS !== "undefined" && LESSONS) ? LESSONS.length + "차시" : "";
+  }
 };
 
 function renderCorpus() {

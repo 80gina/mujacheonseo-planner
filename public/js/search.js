@@ -104,7 +104,7 @@ function buildIndex() {
     });
   });
 
-  (LESSONS || []).forEach(function (x) {
+  (typeof LESSONS !== "undefined" && LESSONS ? LESSONS : []).forEach(function (x) {
     pushDoc(idx, { group: "100차시", tab: "lessons", page: "corpus", lesson: x.no,
       title: x.no + "차시 " + x.title, sub: x.myth + " · " + x.name,
       text: [x.title, x.myth, x.name, x.sci, x.meaning, x.art, x.eco,
@@ -141,7 +141,7 @@ function runSearch(q) {
 
   if (!hits.length) {
     box.innerHTML = '<p class="empty-note">「' + esc(query) + '」에 해당하는 자료를 찾지 못했습니다.' +
-      (LESSONS ? "" : " 100차시 자료는 아직 불러오지 않았습니다.") + '</p>';
+      ((typeof LESSONS !== "undefined" && LESSONS) ? "" : " 100차시 자료는 아직 불러오지 않았습니다.") + '</p>';
     return;
   }
 
@@ -198,7 +198,7 @@ function initSearch() {
   // 100차시까지 포함해 찾으려면 자료가 있어야 합니다
   input.addEventListener("focus", function once() {
     input.removeEventListener("focus", once);
-    if (typeof loadLessons === "function" && !LESSONS) {
+    if (typeof loadLessons === "function" && typeof LESSONS !== "undefined" && !LESSONS) {
       loadLessons().then(function () { SEARCH_INDEX = null; }).catch(function () {});
     }
   });
