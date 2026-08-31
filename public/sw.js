@@ -5,13 +5,14 @@
    (AI 호출은 인터넷이 필요하므로 항상 네트워크로 보냅니다)
    ========================================================= */
 
-const CACHE = "mujacheonseo-v4";
+const CACHE = "mujacheonseo-v5";
 const SHELL = [
   "./", "./index.html",
   "./css/style.css",
   "./js/data.js", "./js/storage.js", "./js/voice.js",
   "./js/planner.js", "./js/discover.js", "./js/library.js",
   "./js/solo.js", "./js/lessons.js", "./js/corpus.js", "./js/field.js", "./js/status.js", "./js/pwa.js", "./js/app.js",
+  "./data/lessons.json",
   "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"
 ];
 
@@ -50,8 +51,12 @@ self.addEventListener("fetch", function (e) {
         }
         return res;
       }).catch(function () {
-        // 오프라인이고 캐시에도 없으면 첫 화면을 돌려줍니다
-        return caches.match("./index.html");
+        // 오프라인이고 캐시에도 없을 때.
+        // 화면 이동(navigate) 요청에만 첫 화면을 돌려줍니다.
+        // JSON·이미지 요청에까지 HTML 을 돌려주면 "Unexpected token <" 같은
+        // 알아볼 수 없는 오류가 사용자에게 보입니다.
+        if (e.request.mode === "navigate") return caches.match("./index.html");
+        return new Response("", { status: 504, statusText: "오프라인" });
       });
     })
   );

@@ -117,8 +117,12 @@ async function openLessons() {
     try {
       await loadLessons();
     } catch (err) {
-      box.innerHTML = '<div class="alert" role="alert"><b>자료를 불러오지 못했습니다</b>' +
-        '<p>인터넷 연결을 확인한 뒤 탭을 다시 눌러 주세요. (' + lEsc(err.message) + ')</p></div>';
+      const offline = !navigator.onLine;
+      box.innerHTML = '<div class="alert" role="alert"><b>100차시 자료를 불러오지 못했습니다</b>' +
+        '<p>' + (offline
+          ? "지금 인터넷이 끊겨 있습니다. 이 자료는 한 번은 온라인에서 받아야 합니다. 연결된 뒤 다시 눌러 주세요."
+          : "잠시 뒤 탭을 다시 눌러 주세요. 계속 안 되면 새로고침해 보세요.") + '</p>' +
+        '<button class="btn btn-sm" type="button" onclick="openLessons()">다시 시도</button></div>';
       return;
     }
   }

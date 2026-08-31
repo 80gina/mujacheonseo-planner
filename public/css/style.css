@@ -572,3 +572,59 @@ fieldset.field{border:0; padding:0; margin-inline:0;}
 .card.lesson p{margin:0;}
 .card.lesson .quote{font-family:var(--serif); line-height:1.75;}
 #lessonSeason,#lessonArea{margin-bottom:.7rem;}
+
+/* ---------- 15) 접근성 ---------- */
+/* 화면에는 안 보이지만 화면낭독기는 읽는 글 */
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0 0 0 0); white-space:nowrap; border:0;}
+/* 키보드로 처음 Tab 을 누르면 나타나는 본문 바로가기 */
+.skip-link{position:absolute; left:-999px; top:0; z-index:200; padding:.7rem 1.1rem;
+  background:var(--accent-strong); color:#fff; border-radius:0 0 var(--radius-sm) 0; font-weight:600;}
+.skip-link:focus{left:0;}
+/* 포커스 위치를 분명히 */
+:focus-visible{outline:3px solid var(--accent); outline-offset:2px; border-radius:4px;}
+.page-title:focus{outline:none;}
+.page-title:focus-visible{outline:3px solid var(--accent); outline-offset:4px;}
+/* 움직임을 줄여 달라는 설정을 존중합니다 */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important; scroll-behavior:auto !important;}
+  html{scroll-behavior:auto;}
+}
+/* 고대비 모드에서 테두리가 사라지지 않게 */
+@media (forced-colors: active){
+  .card,.panel,.pill,.btn{border:1px solid CanvasText;}
+  .pill.is-active,.btn-primary{forced-color-adjust:none;}
+}
+
+/* ---------- 16) 홈 갈림길 ---------- */
+.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;}
+.fork-card{text-align:left; cursor:pointer; border:1px solid var(--line); transition:border-color .15s, transform .15s;}
+.fork-card:hover{border-color:var(--accent); transform:translateY(-2px);}
+.fork-icon{font-size:1.7rem; display:block; margin-bottom:.5rem;}
+.fork-card h3{margin:.2rem 0 .1rem;}
+.fork-card > p:nth-of-type(1){color:var(--accent-strong); font-weight:600; font-size:.88rem; margin:0 0 .6rem;}
+.fork-go{display:inline-block; margin-top:.8rem; color:var(--accent-strong); font-weight:600; font-size:.9rem;}
+
+/* ---------- 17) 전체 검색 ---------- */
+.search-panel{margin-bottom:1.2rem;}
+.search-big{width:100%; font-size:16px; padding:.85rem 1rem; border:1px solid var(--line);
+  border-radius:var(--radius-sm); background:var(--bg-soft); color:var(--text);}
+.search-hit b{display:block; margin:.2rem 0;}
+.search-hit .btn{margin-top:.5rem;}
+
+/* ---------- 18) 아카이브 탭 묶음 ---------- */
+.tab-groups{display:flex; flex-direction:column; gap:.5rem; margin-bottom:1.3rem;}
+.tab-group{display:flex; flex-wrap:wrap; gap:.4rem; align-items:center;}
+.tab-group .filter-label{min-width:6.5rem;}
+.pill-mark{border-color:var(--warn); color:var(--warn);}
+.pill-mark.is-active{background:var(--warn); border-color:var(--warn); color:#fff;}
+
+/* ---------- 19) 보관함 ---------- */
+.backup-panel{margin-bottom:1.2rem;}
+.warn-text{color:var(--warn); font-weight:600;}
+
+@media (max-width:720px){
+  .grid-3{grid-template-columns:1fr;}
+  .tab-group .filter-label{min-width:100%; margin-bottom:.15rem;}
+}

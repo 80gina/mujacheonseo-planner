@@ -454,8 +454,10 @@ function initCorpus() {
     const btn = e.target.closest("[data-ctab]");
     if (!btn) return;
     corpusTab = btn.getAttribute("data-ctab");
-    tabs.querySelectorAll(".pill").forEach(function (p) {
-      p.classList.toggle("is-active", p === btn);
+    tabs.querySelectorAll("[data-ctab]").forEach(function (p) {
+      const on = p === btn;
+      p.classList.toggle("is-active", on);
+      p.setAttribute("aria-selected", String(on));   // 화면낭독기에 선택 상태 전달
     });
     if (typeof Voice !== "undefined" && Voice.stop) Voice.stop();
     if (corpusTab === "lessons") { openLessons(); return; }

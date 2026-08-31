@@ -396,7 +396,8 @@ function renderSoloDone() {
     '<textarea id="soloMemo" rows="3" placeholder="예) 잎을 버리는 것이 아끼는 방법이라는 말이 남았다"></textarea>' +
     '<div class="btn-row" style="margin-top:.8rem">' +
     '<button class="btn btn-primary btn-sm" type="button" id="soloSaveMemo">기록 저장</button>' +
-    '<button class="btn btn-sm" type="button" id="soloExit">다른 코스 보기</button></div>' +
+    '<button class="btn btn-sm" type="button" id="soloExit">다른 코스 보기</button>' +
+    '<button class="btn btn-sm" type="button" data-nav="archive">📓 나의 기록 보기</button></div>' +
     '<p class="small" style="margin-top:.8rem">해설을 직접 하실 분이라면, 이 코스를 뼈대로 삼아 ' +
     '「수업 설계」에서 대상과 시간에 맞는 계획서를 만들 수 있습니다.</p>' +
     '<button class="btn btn-sm" type="button" data-solo-plan="' + c.id + '">이 코스로 수업계획서 만들기</button></div>';
@@ -491,13 +492,10 @@ function initSolo() {
     if (id === "soloSaveMemo") {
       const memo = document.getElementById("soloMemo").value.trim();
       if (!memo) { if (typeof toast === "function") toast("한 줄만 적어 주세요"); return; }
-      try {
-        const list = JSON.parse(localStorage.getItem("mujacheonseo.memo.v1") || "[]");
-        list.unshift({ at: new Date().toISOString(), course: soloCourse.title, memo: memo });
-        localStorage.setItem("mujacheonseo.memo.v1", JSON.stringify(list.slice(0, 200)));
-        if (typeof toast === "function") toast("기록했습니다");
-      } catch (err) {
-        if (typeof toast === "function") toast("이 브라우저에서는 저장이 막혀 있습니다");
+      if (Store.addMemo(soloCourse.title, memo)) {
+        if (typeof refreshMemos === "function") refreshMemos();
+        document.getElementById("soloMemo").value = "";
+        if (typeof toast === "function") toast("기록했습니다. 보관함 → 나의 기록에서 다시 볼 수 있습니다");
       }
       return;
     }
