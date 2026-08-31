@@ -5,7 +5,7 @@
    (AI 호출은 인터넷이 필요하므로 항상 네트워크로 보냅니다)
    ========================================================= */
 
-const CACHE = "mujacheonseo-v5";
+const CACHE = "mujacheonseo-v6";   // 선택함(v2.5) — 올릴 때마다 올려야 새 파일이 내려갑니다
 const SHELL = [
   "./", "./index.html",
   "./css/style.css",
@@ -41,6 +41,33 @@ self.addEventListener("fetch", function (e) {
   if (url.pathname.startsWith("/api/")) return;
   if (e.request.method !== "GET") return;
 
+  /* 코드(html · css · js)는 네트워크 먼저.
+     캐시 먼저로 두었더니 새로 배포해도 옛 화면이 계속 보였습니다.
+     — 새로 고침 한 번이면 되지만, 그걸 알아야만 쓸 수 있는 앱은 곤란합니다.
+     망이 없으면 곧바로 캐시로 넘어가므로 숲속에서도 그대로 열립니다. */
+  const isCode = url.origin === location.origin &&
+    (e.request.mode === "navigate" || /\.(html|css|js)$/.test(url.pathname));
+
+  if (isCode) {
+    e.respondWith(
+      fetch(e.request).then(function (res) {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+        }
+        return res;
+      }).catch(function () {
+        return caches.match(e.request).then(function (hit) {
+          if (hit) return hit;
+          if (e.request.mode === "navigate") return caches.match("./index.html");
+          return new Response("", { status: 504, statusText: "오프라인" });
+        });
+      })
+    );
+    return;
+  }
+
+  /* 그림 · 자료 파일은 바뀌는 일이 드무니 캐시 먼저 — 빠르고 통신도 아낍니다 */
   e.respondWith(
     caches.match(e.request).then(function (hit) {
       if (hit) return hit;
@@ -51,11 +78,6 @@ self.addEventListener("fetch", function (e) {
         }
         return res;
       }).catch(function () {
-        // 오프라인이고 캐시에도 없을 때.
-        // 화면 이동(navigate) 요청에만 첫 화면을 돌려줍니다.
-        // JSON·이미지 요청에까지 HTML 을 돌려주면 "Unexpected token <" 같은
-        // 알아볼 수 없는 오류가 사용자에게 보입니다.
-        if (e.request.mode === "navigate") return caches.match("./index.html");
         return new Response("", { status: 504, statusText: "오프라인" });
       });
     })
