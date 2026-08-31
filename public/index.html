@@ -444,8 +444,13 @@
         </div>
         <div class="field">
           <label for="voiceRate">음성 속도</label>
-          <input type="range" id="voiceRate" min="0.6" max="1.4" step="0.1" value="1" />
-          <p class="hint"><span id="voiceRateVal">1.0</span> 배속</p>
+          <input type="range" id="voiceRate" min="0.6" max="1.4" step="0.05" value="0.95" />
+          <p class="hint"><span id="voiceRateVal">0.95</span> 배속</p>
+        </div>
+        <div class="field">
+          <label for="voiceSelect">목소리</label>
+          <select id="voiceSelect"><option value="">— 기기 기본 —</option></select>
+          <p class="hint">기기에 설치된 한국어 음성 중에서 고릅니다.</p>
         </div>
       </div>
       <label class="switch">

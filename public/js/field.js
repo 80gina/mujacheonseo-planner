@@ -139,13 +139,42 @@ function initField() {
   });
 
   const rate = document.getElementById("voiceRate");
+  rate.value = String(Voice.rate);
+  document.getElementById("voiceRateVal").textContent = Voice.rate.toFixed(2);
   rate.addEventListener("input", function () {
-    Voice.rate = Number(rate.value);
-    document.getElementById("voiceRateVal").textContent = Voice.rate.toFixed(1);
+    Voice.setRate(rate.value);
+    document.getElementById("voiceRateVal").textContent = Voice.rate.toFixed(2);
+  });
+
+  // 목소리 고르기 — 기기마다 설치된 음성이 달라 목록을 그때그때 채웁니다
+  const sel = document.getElementById("voiceSelect");
+  const fillVoices = function () {
+    Voice.refreshVoices();
+    if (!Voice.voices.length) return;
+    const cur = Voice.koVoice && Voice.koVoice.name;
+    sel.innerHTML = Voice.voices.map(function (v) {
+      return '<option value="' + v.name + '"' + (v.name === cur ? " selected" : "") + '>' +
+             v.name + (v.localService ? " (기기 내장)" : " (온라인)") + '</option>';
+    }).join("");
+    document.getElementById("voiceSupportHint").textContent = Voice.supportMessage();
+  };
+  fillVoices();
+  if (Voice.supported && typeof window.speechSynthesis.addEventListener === "function") {
+    window.speechSynthesis.addEventListener("voiceschanged", fillVoices);
+  }
+  [300, 1000].forEach(function (ms) { setTimeout(fillVoices, ms); });
+
+  sel.addEventListener("change", function () {
+    if (Voice.setVoice(sel.value)) {
+      Voice.speak("이 목소리로 안내합니다.", { force: true });
+    }
   });
 
   document.getElementById("btnVoiceTest").addEventListener("click", function () {
-    const ok = Voice.speak("무자천서 플래너입니다. 음성 안내가 잘 들리시나요?", { force: true });
+    // 실제 해설 문장으로 시험해야 어색한 곳이 드러납니다
+    const ok = Voice.speak(
+      "무자천서 플래너입니다. 잎을 따지 말고 손끝으로 두께만 만져 보게 하세요. " +
+      "왜 이 잎은 두꺼울까, 가 다음 질문이 됩니다.", { force: true });
     if (!ok) toast("이 브라우저에서는 음성을 재생할 수 없습니다.");
   });
 
