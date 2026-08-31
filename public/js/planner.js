@@ -34,6 +34,7 @@ function refreshModuleSelect() {
 function initPlanner() {
   const sel = document.getElementById("f-module");
   refreshModuleSelect();
+  initPickField();
 
   sel.addEventListener("change", function () {
     document.getElementById("customTopicField").hidden = sel.value !== "__custom__";
@@ -146,6 +147,7 @@ function initPlanner() {
 function resetForm() {
   document.getElementById("planForm").reset();
   document.getElementById("moduleHint").textContent = "";
+  initPickField();
   showResult("empty");
 }
 
@@ -228,6 +230,8 @@ function collectPayload() {
     // 해설 아카이브의 '숲을 읽는 6대 분류' 키워드를 함께 보냅니다.
     // AI가 우리 앱과 같은 어휘로 관찰 지점을 잡게 하려는 것입니다.
     archive: (typeof corpusBrief === "function") ? corpusBrief().taxonomy : null,
+    // 해설 아카이브 선택함에서 담아 온 자료들입니다.
+    picks: (typeof Picks !== "undefined") ? Picks.forPrompt() : [],
     module: m ? {
       id: m.id, name: m.name, subject: m.subject,
       question: m.question, steps: m.steps,
@@ -332,6 +336,42 @@ function scrollToResult() {
   const offset = (header ? header.offsetHeight : 0) + 8;
   const top = panel.getBoundingClientRect().top + window.pageYOffset - offset;
   window.scrollTo({ top: top, behavior: "smooth" });
+}
+
+/* 수업 설계 폼의 「선택한 자료」 칸.
+   해설 아카이브에서 담은 것이 여기에도 보여야 무엇을 근거로 만드는지 알 수 있습니다. */
+function refreshPickField() {
+  const box = document.getElementById("pickField");
+  if (!box || typeof Picks === "undefined") return;
+  const list = Picks.all();
+  box.hidden = (list.length === 0);
+  const cnt = document.getElementById("pickFieldCount");
+  if (cnt) cnt.textContent = list.length;
+  const ul = document.getElementById("pickFieldList");
+  if (!ul) return;
+  const safe = function (t) {
+    return String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  };
+  const KIND = (typeof PICK_KIND !== "undefined") ? PICK_KIND : {};
+  ul.innerHTML = list.map(function (p) {
+    return '<div class="pick-row"><b>' + safe(KIND[p.kind] || "자료") + '</b>' +
+      '<span>' + safe(p.label) + '</span></div>';
+  }).join("");
+}
+
+function initPickField() {
+  const btn = document.getElementById("btnPickFieldClear");
+  if (btn) {
+    btn.addEventListener("click", function () {
+      Picks.clear();
+      refreshPickField();
+      if (typeof renderPickBar === "function") renderPickBar();
+      if (typeof renderCorpus === "function" &&
+          document.getElementById("corpusBody")) renderCorpus();
+      toast("선택함을 비웠습니다");
+    });
+  }
+  refreshPickField();
 }
 
 /* ---------- 3) 화면 상태 ---------- */

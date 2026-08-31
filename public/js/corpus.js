@@ -380,13 +380,193 @@ function esc(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/* ---------------------------------------------------------
+   선택함 — 아카이브에서 고른 자료를 담습니다
+   갈래마다 생김새가 달라, 담을 때 필요한 것(이름 · 설명)을
+   여기서 한 가지 형태로 풀어 줍니다.
+   --------------------------------------------------------- */
+const PICK_KIND = {
+  taxonomy:    "6대 분류",
+  hwadu:       "화두",
+  trees:       "노거수",
+  courses:     "코스",
+  names:       "학명",
+  myth:        "신화",
+  scenarios:   "시나리오",
+  palace:      "동궐도",
+  notes:       "현장 노트",
+  corrections: "정정 기록",
+  lessons:     "100차시"
+};
+
+/* 갈래 + 열쇠말 → { label, detail } */
+function pickResolve(kind, key) {
+  let x;
+  if (kind === "taxonomy") {
+    for (let i = 0; i < TAXONOMY.length; i++) {
+      const hit = TAXONOMY[i].items.filter(function (it) { return it[0] === key; })[0];
+      if (hit) return { label: hit[0], detail: TAXONOMY[i].name + " · " + hit[1] };
+    }
+    return null;
+  }
+  if (kind === "hwadu") {
+    x = hwaduFlat().filter(function (h) { return h.name === key; })[0];
+    return x ? { label: x.name, detail: "던질 질문: " + x.question + " / 관찰 지점: " + x.spot } : null;
+  }
+  if (kind === "trees") {
+    x = TREES.filter(function (t) { return t.name === key; })[0];
+    return x ? { label: x.name, detail: x.species + " · " + x.desig + " · " + x.region + " / " + x.read } : null;
+  }
+  if (kind === "courses") {
+    x = COURSES.filter(function (c) { return String(c.no) === String(key); })[0];
+    return x ? { label: x.no + "코스 " + x.title,
+                 detail: "동선: " + x.route + " / 노거수: " + x.trees.join(", ") + " / 화두: " + x.hwadu } : null;
+  }
+  if (kind === "names") {
+    x = NAMES.filter(function (n) { return n.n === key; })[0];
+    return x ? { label: x.n, detail: x.s + " — " + x.read + (x.fix ? " / 바로잡음: " + x.fix : "") } : null;
+  }
+  if (kind === "myth") {
+    x = MYTHS.filter(function (m) { return m.n === key; })[0];
+    return x ? { label: x.n, detail: x.s + " · " + x.who + " — " + x.story +
+                 " / 우리 숲에서: " + x.here } : null;
+  }
+  if (kind === "scenarios") {
+    x = SCENARIOS.filter(function (v) { return String(v.day) === String(key); })[0];
+    return x ? { label: x.key + " 편 " + x.title,
+                 detail: "단계: " + x.periods.map(function (pp) { return pp[1]; }).join(" → ") } : null;
+  }
+  if (kind === "palace") {
+    x = PALACE.filter(function (v) { return String(v[0]) === String(key); })[0];
+    return x ? { label: x[0] + "일차 " + x[1], detail: "보는 눈: " + x[2] + " / " + x[3] } : null;
+  }
+  if (kind === "notes") {
+    x = FIELDNOTES.filter(function (f) { return f[0] === key; })[0];
+    return x ? { label: x[0], detail: x[1] } : null;
+  }
+  if (kind === "corrections") {
+    x = CORRECTIONS.filter(function (c) { return c[0] === key; })[0];
+    return x ? { label: x[0], detail: "정정 기록 — " + x[1] } : null;
+  }
+  if (kind === "lessons") {
+    if (typeof LESSONS === "undefined" || !LESSONS) return null;
+    x = LESSONS.filter(function (l) { return String(l.no) === String(key); })[0];
+    return x ? { label: x.no + "차시 " + x.title,
+                 detail: "신화: " + x.myth + " / 우리 자연: " + x.name +
+                         " / 물음: " + x.ask + (x.safe ? " / ⚠ " + x.safe : "") } : null;
+  }
+  return null;
+}
+
+function pickId(kind, key) { return kind + ":" + key; }
+
+/* 카드에 붙는 담기 버튼 */
+function pickBtn(kind, key) {
+  const on = (typeof Picks !== "undefined") && Picks.has(pickId(kind, key));
+  return '<button class="btn btn-sm pick-btn' + (on ? " is-picked" : "") +
+    '" type="button" aria-pressed="' + (on ? "true" : "false") +
+    '" data-pick-kind="' + esc(kind) + '" data-pick-key="' + esc(key) + '">' +
+    (on ? "✓ 담김" : "＋ 담기") + '</button>';
+}
+
+function togglePick(kind, key, btn) {
+  const got = pickResolve(kind, key);
+  if (!got) return;
+  const res = Picks.toggle({
+    id: pickId(kind, key), kind: kind, key: String(key),
+    label: got.label, detail: got.detail
+  });
+  if (res === "full") {
+    toast("선택함은 " + PICK_MAX + "개까지입니다. 먼저 몇 개를 빼 주세요.");
+    return;
+  }
+  const on = (res === "added");
+  if (btn) {
+    btn.classList.toggle("is-picked", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.textContent = on ? "✓ 담김" : "＋ 담기";
+  }
+  toast(on ? "「" + got.label + "」을(를) 선택함에 담았습니다"
+           : "「" + got.label + "」을(를) 선택함에서 뺐습니다");
+  renderPickBar();
+}
+
+/* 화면 아래 선택함 막대 */
+function renderPickBar() {
+  const bar = document.getElementById("pickBar");
+  if (!bar) return;
+  const list = Picks.all();
+  bar.hidden = (list.length === 0);
+  const chips = document.getElementById("pickChips");
+  if (chips) {
+    chips.innerHTML = list.map(function (p) {
+      return '<span class="pick-chip"><b>' + esc(PICK_KIND[p.kind] || "자료") + '</b> ' +
+        esc(p.label) +
+        '<button type="button" class="pick-x" data-pick-off="' + esc(p.id) +
+        '" aria-label="' + esc(p.label) + ' 빼기">×</button></span>';
+    }).join("");
+  }
+  const n = document.getElementById("pickGoCount");
+  if (n) n.textContent = list.length;
+  if (typeof refreshPickField === "function") refreshPickField();
+}
+
+/* 선택함 → 수업 설계 폼 */
+function picksToPlanner() {
+  const list = Picks.all();
+  if (!list.length) return;
+  const title = document.getElementById("f-title");
+  const topic = document.getElementById("f-topic");
+  const note  = document.getElementById("f-note");
+
+  if (title && !title.value.trim()) {
+    title.value = list.length === 1
+      ? list[0].label
+      : list[0].label + " 외 " + (list.length - 1) + "가지로 읽는 숲";
+  }
+  if (topic && !topic.value.trim()) {
+    topic.value = list.slice(0, 3).map(function (p) { return p.label; }).join(", ");
+  }
+  if (note) {
+    const body = "선택함에서 고른 자료 " + list.length + "개 (이 자료들을 엮어 한 흐름으로 만들어 주세요):\n" +
+      list.map(function (p) {
+        return "- [" + (PICK_KIND[p.kind] || "자료") + "] " + p.label + " — " + p.detail;
+      }).join("\n");
+    note.value = note.value.trim() ? note.value.trim() + "\n" + body : body;
+  }
+  navigate("design");
+  toast("선택한 " + list.length + "개로 수업 설계를 시작합니다");
+}
+
+function initPickBar() {
+  const bar = document.getElementById("pickBar");
+  if (!bar) return;
+  bar.addEventListener("click", function (e) {
+    const off = e.target.closest("[data-pick-off]");
+    if (off) {
+      Picks.remove(off.getAttribute("data-pick-off"));
+      renderPickBar();
+      renderCorpus();
+      return;
+    }
+    if (e.target.closest("#btnPickClear")) {
+      Picks.clear(); renderPickBar(); renderCorpus();
+      toast("선택함을 비웠습니다");
+      return;
+    }
+    if (e.target.closest("#btnPickPlan")) picksToPlanner();
+  });
+  renderPickBar();
+}
+
 function corpusHTML() {
   if (corpusTab === "taxonomy") {
     return TAXONOMY.map(function (g) {
       return '<div class="panel"><h3>' + esc(g.name) + '</h3>' +
         '<p class="small">' + esc(g.sub) + '</p><div class="booklist">' +
         g.items.map(function (it) {
-          return '<div class="book"><b>' + esc(it[0]) + '</b><p>' + esc(it[1]) + '</p></div>';
+          return '<div class="book"><b>' + esc(it[0]) + '</b><p>' + esc(it[1]) + '</p>' +
+            pickBtn("taxonomy", it[0]) + '</div>';
         }).join("") + '</div></div>';
     }).join("");
   }
@@ -397,7 +577,9 @@ function corpusHTML() {
           return '<div class="book"><b>' + esc(h[0]) + '</b>' +
             '<p class="quote" style="margin:.35rem 0">“' + esc(h[1]) + '”</p>' +
             '<p class="small">관찰 지점 · ' + esc(h[2]) + '</p>' +
-            '<button class="btn btn-sm" type="button" data-hwadu="' + esc(h[0]) + '">이 화두로 수업 설계</button></div>';
+            '<div class="btn-row">' +
+            '<button class="btn btn-sm" type="button" data-hwadu="' + esc(h[0]) + '">바로 수업 설계</button>' +
+            pickBtn("hwadu", h[0]) + '</div></div>';
         }).join("") + '</div></div>';
     }).join("");
   }
@@ -413,7 +595,7 @@ function corpusHTML() {
               '<p class="small">' + esc(t.species) + ' · ' + esc(t.desig) + '</p>' +
               '<p class="quote" style="margin:.35rem 0">' + esc(t.read) + '</p>' +
               (t.note ? '<p class="caution-box">✎ ' + esc(t.note) + '</p>' : '') +
-              '</div>';
+              pickBtn("trees", t.name) + '</div>';
           }).join("") + '</div></div>';
       }).join("");
   }
@@ -426,7 +608,9 @@ function corpusHTML() {
           '<p class="module-meta"><b>주요 노거수</b> · ' + c.trees.map(esc).join(", ") + '</p>' +
           '<p class="module-meta"><b>화두</b> · ' + esc(c.hwadu) + '</p>' +
           '<p style="margin-top:.6rem">' + esc(c.point) + '</p>' +
-          '<button class="btn btn-sm btn-primary" type="button" data-course="' + c.no + '">이 코스로 수업 설계</button></div>';
+          '<div class="btn-row">' +
+          '<button class="btn btn-sm btn-primary" type="button" data-course="' + c.no + '">바로 수업 설계</button>' +
+          pickBtn("courses", c.no) + '</div></div>';
       }).join("") + '</div>';
   }
   if (corpusTab === "myth") return mythHTML();
@@ -437,7 +621,8 @@ function corpusHTML() {
   return '<p class="hint">아래는 생성형 AI가 만든 원자료에서 근거를 찾지 못해 뺀 항목입니다. ' +
     '“왜 확인해야 하는가”를 보여 주는 수업 자료로 그대로 씁니다.</p><div class="booklist">' +
     CORRECTIONS.map(function (c) {
-      return '<div class="book"><b>' + esc(c[0]) + '</b><p>' + esc(c[1]) + '</p></div>';
+      return '<div class="book"><b>' + esc(c[0]) + '</b><p>' + esc(c[1]) + '</p>' +
+        pickBtn("corrections", c[0]) + '</div>';
     }).join("") + '</div>';
 }
 
@@ -489,6 +674,11 @@ function initCorpus() {
 
   const body = document.getElementById("corpusBody");
   body.addEventListener("click", function (e) {
+    const pk = e.target.closest("[data-pick-kind]");
+    if (pk) {
+      togglePick(pk.getAttribute("data-pick-kind"), pk.getAttribute("data-pick-key"), pk);
+      return;
+    }
     if (typeof handleLessonClick === "function" && handleLessonClick(e)) return;
     const h = e.target.closest("[data-hwadu]");
     if (h) { useHwadu(h.getAttribute("data-hwadu")); return; }
@@ -500,6 +690,7 @@ function initCorpus() {
     if (my) { useMyth(my.getAttribute("data-myth")); }
   });
 
+  initPickBar();
   renderCorpus();
 }
 
@@ -819,7 +1010,8 @@ function corpusExtraHTML(tab) {
             return '<div class="book"><b>' + esc(x.n) + '</b>' +
               '<p class="small"><i>' + esc(x.s) + '</i></p>' +
               '<p class="quote" style="margin:.35rem 0">' + esc(x.read) + '</p>' +
-              (x.fix ? '<p class="caution-box">✎ ' + esc(x.fix) + '</p>' : '') + '</div>';
+              (x.fix ? '<p class="caution-box">✎ ' + esc(x.fix) + '</p>' : '') +
+              pickBtn("names", x.n) + '</div>';
           }).join("") + '</div></div>';
       }).join("") +
       '<h2 class="section-title">학명 어원 사전</h2><div class="booklist">' +
@@ -836,7 +1028,9 @@ function corpusExtraHTML(tab) {
           '<div class="booklist">' + s.periods.map(function (p) {
             return '<div class="book"><b>' + esc(p[0]) + ' · ' + esc(p[1]) + '</b><p>' + esc(p[2]) + '</p></div>';
           }).join("") + '</div>' +
-          '<button class="btn btn-sm btn-primary" type="button" data-scenario="' + s.day + '">이 주제로 수업 설계</button></div>';
+          '<div class="btn-row">' +
+          '<button class="btn btn-sm btn-primary" type="button" data-scenario="' + s.day + '">바로 수업 설계</button>' +
+          pickBtn("scenarios", s.day) + '</div></div>';
       }).join("");
   }
   if (tab === "wilson") {
@@ -856,13 +1050,15 @@ function corpusExtraHTML(tab) {
         return '<div class="card"><span class="module-tag">' + p[0] + '일차</span>' +
           '<h3>' + esc(p[1]) + '</h3>' +
           '<p class="module-meta"><b>보는 눈</b> · ' + esc(p[2]) + '</p>' +
-          '<p style="margin-top:.6rem">' + esc(p[3]) + '</p></div>';
+          '<p style="margin-top:.6rem">' + esc(p[3]) + '</p>' +
+          pickBtn("palace", p[0]) + '</div>';
       }).join("") + '</div>';
   }
   if (tab === "notes") {
     return '<p class="hint">한 그루에서 한 이야기가 나오는 자리들입니다. 사실 확인을 거친 판입니다.</p>' +
       '<div class="booklist">' + FIELDNOTES.map(function (f) {
-        return '<div class="book"><b>' + esc(f[0]) + '</b><p>' + esc(f[1]) + '</p></div>';
+        return '<div class="book"><b>' + esc(f[0]) + '</b><p>' + esc(f[1]) + '</p>' +
+          pickBtn("notes", f[0]) + '</div>';
       }).join("") + '</div>';
   }
   return "";
@@ -1008,7 +1204,9 @@ function mythHTML() {
             '<p style="margin:.4rem 0">' + esc(m.story) + '</p>' +
             '<p class="quote" style="margin:.4rem 0">' + esc(m.read) + '</p>' +
             (m.fix ? '<p class="caution-box">✎ ' + esc(m.fix) + '</p>' : '') +
-            '<button class="btn btn-sm" type="button" data-myth="' + esc(m.n) + '">이 이야기로 수업 설계</button>' +
+            '<div class="btn-row">' +
+            '<button class="btn btn-sm" type="button" data-myth="' + esc(m.n) + '">바로 수업 설계</button>' +
+            pickBtn("myth", m.n) + '</div>' +
             '</div>';
         }).join("") + '</div></div>';
     }).join("") +

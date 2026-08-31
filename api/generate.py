@@ -140,6 +140,20 @@ def build_prompt(data, wiki=None):
             for w in wiki:
                 lines.append("  [%s] %s" % (w["title"], w["extract"]))
 
+    picks = data.get("picks") or []
+    if picks:
+        lines += [
+            "",
+            "해설가가 앱의 '해설 아카이브'에서 직접 골라 담은 자료 %d개입니다." % len(picks),
+            "이 자료들은 이번 수업의 뼈대입니다. 하나도 빠뜨리지 말고, 서로 이어지는 하나의 흐름으로 엮으세요.",
+            "억지로 나열하지 말고, 왜 이것들이 한 수업에 함께 놓이는지 그 연결을 만들어 주세요.",
+        ]
+        for p in picks[:12]:
+            lines.append("  · [%s] %s — %s" % (
+                str(p.get("kind", ""))[:20],
+                str(p.get("label", ""))[:80],
+                str(p.get("detail", ""))[:300]))
+
     if data.get("note"):
         lines += ["", "해설가의 추가 요청: %s" % data["note"]]
 

@@ -57,6 +57,7 @@ function lessonCardHTML(x) {
       '<div class="btn-row">' +
         '<button class="btn btn-sm btn-primary" type="button" data-lread="' + x.no + '">🔊 대본 읽어주기</button>' +
         '<button class="btn btn-sm" type="button" data-lstop="1">■ 멈춤</button>' +
+        (typeof pickBtn === "function" ? pickBtn("lessons", x.no) : "") +
       '</div>' +
       '<h4>현장 해설 팁</h4><p>' + lEsc(x.tip) + '</p>' +
       '<h4>평가 포인트</h4><p>' + lEsc(x.eval) + '</p>' +
@@ -68,7 +69,10 @@ function lessonCardHTML(x) {
         '<button class="btn btn-sm btn-primary" type="button" data-lplan="' + x.no + '">이 차시로 수업 설계</button>' +
         '<button class="btn btn-sm" type="button" data-lclose="1">접기</button>' +
       '</div>'
-    ) : '<button class="btn btn-sm" type="button" data-lopen="' + x.no + '">펼쳐 보기</button>') +
+    ) : '<div class="btn-row">' +
+        '<button class="btn btn-sm" type="button" data-lopen="' + x.no + '">펼쳐 보기</button>' +
+        (typeof pickBtn === "function" ? pickBtn("lessons", x.no) : "") +
+      '</div>') +
     '</div>';
 }
 

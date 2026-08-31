@@ -243,3 +243,54 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function () { el.hidden = true; }, 2600);
 }
+
+/* ---------------------------------------------------------
+   선택함 (Picks)
+   해설 아카이브에서 고른 자료를 담아 두는 바구니입니다.
+   여러 갈래(화두 · 노거수 · 신화 · 100차시…)를 가로질러 담고,
+   담긴 것들을 한꺼번에 수업계획서 조건으로 넘깁니다.
+   보관함(계획서)과 달리 작업 중 상태이므로 백업 대상에는 넣지 않습니다.
+   --------------------------------------------------------- */
+const PICK_KEY = "mujacheonseo.picks.v1";
+const PICK_MAX = 12;   // 너무 많이 담으면 AI 프롬프트가 산만해집니다
+
+const Picks = {
+  all: function () {
+    try {
+      const v = JSON.parse(localStorage.getItem(PICK_KEY) || "[]");
+      return Array.isArray(v) ? v.filter(function (p) { return p && p.id && p.label; }) : [];
+    } catch (e) { return []; }
+  },
+  save: function (list) {
+    try { localStorage.setItem(PICK_KEY, JSON.stringify(list)); } catch (e) {}
+    return list;
+  },
+  count: function () { return this.all().length; },
+  has: function (id) {
+    return this.all().some(function (p) { return p.id === id; });
+  },
+  add: function (item) {
+    if (!item || !item.id) return "invalid";
+    const list = this.all();
+    if (list.some(function (p) { return p.id === item.id; })) return "already";
+    if (list.length >= PICK_MAX) return "full";
+    list.push(item);
+    this.save(list);
+    return "added";
+  },
+  remove: function (id) {
+    this.save(this.all().filter(function (p) { return p.id !== id; }));
+  },
+  /* 담기 ↔ 빼기. 결과를 문자열로 돌려줍니다: added / removed / full */
+  toggle: function (item) {
+    if (this.has(item.id)) { this.remove(item.id); return "removed"; }
+    return this.add(item);
+  },
+  clear: function () { this.save([]); },
+  /* AI 에 넘길 형태 — 화면용 필드는 뺍니다 */
+  forPrompt: function () {
+    return this.all().map(function (p) {
+      return { kind: p.kind, label: p.label, detail: p.detail };
+    });
+  }
+};

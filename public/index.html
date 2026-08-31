@@ -256,6 +256,13 @@
           <textarea id="f-note" name="note" rows="3" placeholder="예) 휠체어 이용 참가자가 있어요 / 비 오는 날 대안이 필요해요"></textarea>
         </div>
 
+        <div class="field" id="pickField" hidden>
+          <label>선택한 자료 <span class="count-badge" id="pickFieldCount">0</span></label>
+          <div class="pick-list" id="pickFieldList"></div>
+          <p class="hint">해설 아카이브에서 담은 자료입니다. AI가 이 자료들을 엮어 한 흐름으로 만듭니다.
+             <button class="btn btn-sm" type="button" id="btnPickFieldClear">모두 빼기</button></p>
+        </div>
+
         <div class="field">
           <label class="switch">
             <input type="checkbox" id="f-search" /> 🔎 웹 검색으로 근거 찾기
@@ -312,6 +319,18 @@
     </div>
   </div>
 </section>
+
+<!-- 선택함 — 해설 아카이브에서 담은 자료 -->
+<div class="pickbar no-print" id="pickBar" hidden aria-label="선택함">
+  <div class="pickbar-in">
+    <div class="pickbar-head">
+      <b>선택함</b> <span class="count-badge" id="pickGoCount">0</span>
+      <button class="btn btn-sm" type="button" id="btnPickClear">비우기</button>
+    </div>
+    <div class="pickbar-chips" id="pickChips"></div>
+    <button class="btn btn-primary" type="button" id="btnPickPlan">선택한 자료로 수업계획서 만들기</button>
+  </div>
+</div>
 
 <!-- ===== 3. 활동 도서관 ===== -->
 <section class="page" id="page-library">
@@ -397,6 +416,11 @@
              placeholder="🔎 무엇이든 찾아보세요 — 예) 재선충, 복수초, 다프네, 나이테" />
       <p class="hint">활동 모듈 · 화두 · 노거수 · 학명 · 신화 · 100차시 · 자율 코스를 한 번에 훑습니다.</p>
       <div id="searchResults"></div>
+    </div>
+
+    <div class="panel pickhelp no-print">
+      <b>＋ 담기</b> 를 누르면 아래 <b>선택함</b>에 쌓입니다. 갈래를 옮겨 다니며 여러 개를 담을 수 있고,
+      다 담았으면 <b>선택한 자료로 수업계획서 만들기</b>를 누르세요. 선택은 브라우저에 남아 다음에도 그대로 있습니다.
     </div>
 
     <div class="tab-groups no-print" id="corpusTabs" role="tablist" aria-label="해설 아카이브 갈래">
