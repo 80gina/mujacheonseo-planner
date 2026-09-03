@@ -232,6 +232,8 @@ function collectPayload() {
     archive: (typeof corpusBrief === "function") ? corpusBrief().taxonomy : null,
     // 해설 아카이브 선택함에서 담아 온 자료들입니다.
     picks: (typeof Picks !== "undefined") ? Picks.forPrompt() : [],
+    // 기주식물 → 나방. 나무 이야기를 벌레로 잇고 싶을 때 쓰라고 보냅니다.
+    moths: (typeof mothBrief === "function") ? mothBrief() : null,
     module: m ? {
       id: m.id, name: m.name, subject: m.subject,
       question: m.question, steps: m.steps,

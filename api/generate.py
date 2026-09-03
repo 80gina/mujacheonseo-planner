@@ -165,6 +165,18 @@ def build_prompt(data, wiki=None):
         for row in archive[:8]:
             lines.append("  · %s" % row)
 
+    moths = data.get("moths") or []
+    if moths:
+        lines += [
+            "",
+            "기주식물별 나방 목록입니다. 애벌레는 정해진 나무만 먹으므로,",
+            "수업에 나오는 나무가 아래 과(科)에 해당하면 그 나방을 관찰 지점으로 삼을 수 있습니다.",
+            "야간 프로그램이 아니라면 성충을 못 볼 수 있으니, 잎의 먹은 자국·번데기·고치를 찾게 하세요.",
+            "억지로 넣지 말고, 이어지는 경우에만 쓰세요.",
+        ]
+        for row in moths[:12]:
+            lines.append("  · %s" % str(row)[:200])
+
     framework = data.get("framework") or []
     if framework:
         lines += ["", "수업의 뼈대 (이 순서를 flow 에 반영할 것):"]

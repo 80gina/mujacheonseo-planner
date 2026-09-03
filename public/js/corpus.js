@@ -396,7 +396,8 @@ const PICK_KIND = {
   palace:      "동궐도",
   notes:       "현장 노트",
   corrections: "정정 기록",
-  lessons:     "100차시"
+  lessons:     "100차시",
+  moths:       "나방"
 };
 
 /* 갈래 + 열쇠말 → { label, detail } */
@@ -447,6 +448,20 @@ function pickResolve(kind, key) {
   if (kind === "corrections") {
     x = CORRECTIONS.filter(function (c) { return c[0] === key; })[0];
     return x ? { label: x[0], detail: "정정 기록 — " + x[1] } : null;
+  }
+  if (kind === "moths") {
+    if (typeof MOTHS === "undefined") return null;
+    if (key === "야간 등화") {
+      return { label: "야간 등화 프로그램",
+               detail: "흰 천과 등으로 나방을 불러 관찰합니다. 진행: " +
+                       MOTH_NIGHT.steps.map(function (t) { return t[1]; }).join(" → ") +
+                       " / 지킬 것: " + MOTH_NIGHT.rules[0] + " " + MOTH_NIGHT.rules[2] };
+    }
+    x = MOTHS.filter(function (m) { return m.n === key; })[0];
+    return x ? { label: x.n,
+                 detail: x.s + " · " + x.fam + " " + x.sub +
+                         (x.host ? " / 기주 " + x.host : "") +
+                         (x.read ? " / " + x.read : "") } : null;
   }
   if (kind === "lessons") {
     if (typeof LESSONS === "undefined" || !LESSONS) return null;
@@ -614,6 +629,7 @@ function corpusHTML() {
       }).join("") + '</div>';
   }
   if (corpusTab === "myth") return mythHTML();
+  if (corpusTab === "moths") return (typeof mothsHTML === "function") ? mothsHTML() : "";
   if (corpusTab === "lessons") return lessonsHTML();
   if (["names", "scenarios", "wilson", "palace", "notes"].indexOf(corpusTab) >= 0) {
     return corpusExtraHTML(corpusTab);
@@ -640,6 +656,9 @@ const TAB_COUNT = {
   wilson: function () { return WILSON.route.length + "곳 · 30회"; },
   lessons: function () {
     return (typeof LESSONS !== "undefined" && LESSONS) ? LESSONS.length + "차시" : "";
+  },
+  moths: function () {
+    return (typeof MOTHS !== "undefined") ? MOTHS.length + "종 · 야간 등화 1" : "";
   }
 };
 
@@ -679,6 +698,7 @@ function initCorpus() {
       togglePick(pk.getAttribute("data-pick-kind"), pk.getAttribute("data-pick-key"), pk);
       return;
     }
+    if (typeof handleMothClick === "function" && handleMothClick(e)) return;
     if (typeof handleLessonClick === "function" && handleLessonClick(e)) return;
     const h = e.target.closest("[data-hwadu]");
     if (h) { useHwadu(h.getAttribute("data-hwadu")); return; }

@@ -9,7 +9,7 @@
    지금은 첫 화면에 필요한 것만 받고, 나머지는 그 화면에 처음 들어갈 때 받습니다.
    서비스 워커가 미리 캐시해 두므로 두 번째 방문부터는 기다림이 없습니다. */
 const SECTION_SCRIPTS = {
-  corpus: ["js/corpus.js", "js/lessons.js", "js/search.js"],
+  corpus: ["js/corpus.js", "js/lessons.js", "js/moths.js", "js/search.js"],
   solo:   ["js/solo.js"],
   field:  ["js/field.js"],
   status: ["js/status.js"]

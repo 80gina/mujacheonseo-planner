@@ -683,3 +683,11 @@ fieldset.field{border:0; padding:0; margin-inline:0;}
 @media (max-width:600px){
   .pickbar-chips{max-height:4.5rem;}
 }
+
+/* ---------- 밤의 숲 · 나방 ---------- */
+.night{border-left:4px solid var(--accent);}
+.night h4{margin-top:1rem;}
+.rules{margin:.4rem 0 0 1.1rem; padding:0; line-height:1.8; font-size:.92rem;}
+.rules li{margin-bottom:.2rem;}
+.card.moth h3{margin-bottom:.15em;}
+.card.moth .module-meta i{font-size:.95em;}

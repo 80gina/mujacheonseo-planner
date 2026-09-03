@@ -37,6 +37,21 @@ function buildIndex() {
     });
   });
 
+  (typeof MOTHS !== "undefined" ? MOTHS : []).forEach(function (m) {
+    pushDoc(idx, { group: "밤의 숲 · 나방", tab: "moths", page: "corpus",
+      title: m.n, sub: m.s + " · " + (m.host || m.sub),
+      text: [m.n, m.s, m.au, m.fam, m.sub, m.alt, m.host,
+             (m.hf || []).join(" "), m.rec, m.read, m.flag].join(" ") });
+  });
+
+  if (typeof MOTH_NIGHT !== "undefined") {
+    pushDoc(idx, { group: "밤의 숲 · 나방", tab: "moths", page: "corpus",
+      title: MOTH_NIGHT.title, sub: MOTH_NIGHT.sub,
+      text: [MOTH_NIGHT.title, MOTH_NIGHT.sub, MOTH_NIGHT.need.join(" "),
+             MOTH_NIGHT.steps.map(function (t) { return t.join(" "); }).join(" "),
+             MOTH_NIGHT.rules.join(" "), MOTH_NIGHT.ask.join(" "), "야간 등화 밤 나방 불빛"].join(" ") });
+  }
+
   (typeof HWADU !== "undefined" ? hwaduFlat() : []).forEach(function (h) {
     pushDoc(idx, { group: "화두 50선", tab: "hwadu", page: "corpus",
       title: h.name, sub: h.question, text: [h.name, h.question, h.spot, h.group].join(" ") });

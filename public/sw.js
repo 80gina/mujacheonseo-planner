@@ -5,13 +5,13 @@
    (AI 호출은 인터넷이 필요하므로 항상 네트워크로 보냅니다)
    ========================================================= */
 
-const CACHE = "mujacheonseo-v6";   // 선택함(v2.5) — 올릴 때마다 올려야 새 파일이 내려갑니다
+const CACHE = "mujacheonseo-v7";   // 선택함(v2.5) — 올릴 때마다 올려야 새 파일이 내려갑니다
 const SHELL = [
   "./", "./index.html",
   "./css/style.css",
   "./js/data.js", "./js/storage.js", "./js/voice.js",
   "./js/planner.js", "./js/discover.js", "./js/library.js",
-  "./js/solo.js", "./js/lessons.js", "./js/corpus.js", "./js/field.js", "./js/status.js", "./js/pwa.js", "./js/app.js",
+  "./js/solo.js", "./js/lessons.js", "./js/moths.js", "./js/corpus.js", "./js/field.js", "./js/status.js", "./js/pwa.js", "./js/app.js",
   "./data/lessons.json",
   "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"
 ];
